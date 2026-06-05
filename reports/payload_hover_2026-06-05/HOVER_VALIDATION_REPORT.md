@@ -48,7 +48,16 @@ Do not continue to payload Figure-8 until hover passes. The next coding/debug pa
 - `hover_xyz_vs_time.png`
 - `hover_tracking_error.png`
 - `hover_xy_drift.png`
+- `payload_hover_3d.png`
 - `hover_payload_cable_angle.png`
+
+## Plot Preview
+
+![Payload hover XY drift](hover_xy_drift.png)
+
+![Payload hover 3D trajectory](payload_hover_3d.png)
+
+![Payload hover XYZ versus time](hover_xyz_vs_time.png)
 
 ## Control Check Added
 

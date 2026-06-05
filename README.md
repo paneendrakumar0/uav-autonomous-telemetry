@@ -141,8 +141,14 @@ Payload hover test:
 Artifacts:
 
 - Payload hover report: [`reports/payload_hover_2026-06-05/HOVER_VALIDATION_REPORT.md`](reports/payload_hover_2026-06-05/HOVER_VALIDATION_REPORT.md)
+- XY drift plot: [`reports/payload_hover_2026-06-05/hover_xy_drift.png`](reports/payload_hover_2026-06-05/hover_xy_drift.png)
+- 3D hover trajectory: [`reports/payload_hover_2026-06-05/payload_hover_3d.png`](reports/payload_hover_2026-06-05/payload_hover_3d.png)
 - XYZ-time plot: [`reports/payload_hover_2026-06-05/hover_xyz_vs_time.png`](reports/payload_hover_2026-06-05/hover_xyz_vs_time.png)
 - Error plot: [`reports/payload_hover_2026-06-05/hover_tracking_error.png`](reports/payload_hover_2026-06-05/hover_tracking_error.png)
+
+![Payload hover XY drift](reports/payload_hover_2026-06-05/hover_xy_drift.png)
+
+![Payload hover 3D trajectory](reports/payload_hover_2026-06-05/payload_hover_3d.png)
 
 ![Payload hover validation](reports/payload_hover_2026-06-05/hover_xyz_vs_time.png)
 
@@ -160,8 +166,14 @@ Artifacts:
 
 - Control report: [`reports/hover_control_check_2026-06-05/HOVER_CONTROL_CHECK.md`](reports/hover_control_check_2026-06-05/HOVER_CONTROL_CHECK.md)
 - Z plot: [`reports/hover_control_check_2026-06-05/hover_control_check_z.png`](reports/hover_control_check_2026-06-05/hover_control_check_z.png)
+- XY drift plot: [`reports/hover_control_check_2026-06-05/hover_control_check_xy_drift.png`](reports/hover_control_check_2026-06-05/hover_control_check_xy_drift.png)
+- 3D hover trajectory: [`reports/hover_control_check_2026-06-05/hover_control_check_3d.png`](reports/hover_control_check_2026-06-05/hover_control_check_3d.png)
 
 ![No-payload hover control check](reports/hover_control_check_2026-06-05/hover_control_check_z.png)
+
+![No-payload hover XY drift](reports/hover_control_check_2026-06-05/hover_control_check_xy_drift.png)
+
+![No-payload hover 3D trajectory](reports/hover_control_check_2026-06-05/hover_control_check_3d.png)
 
 ## Installation
 
@@ -297,4 +309,3 @@ Recommended next sequence:
 Safe statement:
 
 > The baseline ROS 2/PX4 offboard figure-8 circuit is complete and quantitatively logged. I have also added the first slung-payload SITL model and payload swing logger. The payload model currently boots and accepts offboard commands, but hover validation shows that the current cable/joint physics still prevents proper climb. I isolated this by running the same hover controller on the no-payload model, which successfully reaches the commanded altitude. The next task is therefore to correct the payload SDF joint model before presenting a completed slung-payload figure-8.
-
