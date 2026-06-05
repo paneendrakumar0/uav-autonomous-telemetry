@@ -1,0 +1,12 @@
+#!/bin/sh
+#
+# @name 3DR Iris Quadrotor with depth camera and slung payload
+#
+# @type Quadrotor Wide
+#
+
+. ${R}etc/init.d-posix/airframes/10015_gazebo-classic_iris
+
+# The slung payload can swing during ground initialization in SITL.
+param set-default FD_FAIL_P 0
+param set-default FD_FAIL_R 0

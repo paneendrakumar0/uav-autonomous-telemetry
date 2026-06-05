@@ -1,0 +1,177 @@
+#!/usr/bin/env python3
+
+import csv
+import math
+import socket
+import struct
+from pathlib import Path
+
+import rclpy
+from px4_msgs.msg import VehicleLocalPosition
+from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
+
+
+class PayloadSwingLogger(Node):
+    def __init__(self):
+        super().__init__("payload_swing_logger")
+
+        self.declare_parameter("output_path", "payload_swing_metrics.csv")
+        self.declare_parameter("listen_ip", "127.0.0.1")
+        self.declare_parameter("listen_port", 7001)
+        self.declare_parameter("timer_period_s", 0.01)
+
+        output_path = Path(
+            self.get_parameter("output_path").get_parameter_value().string_value
+        ).expanduser()
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        self.csv_file = output_path.open("w", newline="")
+        self.writer = csv.writer(self.csv_file)
+        self.writer.writerow(
+            [
+                "t_s",
+                "uav_x_m",
+                "uav_y_m",
+                "uav_z_gazebo_m",
+                "payload_x_m",
+                "payload_y_m",
+                "payload_z_m",
+                "cable_dx_m",
+                "cable_dy_m",
+                "cable_dz_m",
+                "cable_length_m",
+                "lateral_swing_m",
+                "cable_angle_deg",
+            ]
+        )
+
+        self.latest_uav = None
+        self.samples = 0
+        self.start_time_ns = self.get_clock().now().nanoseconds
+
+        qos = QoSProfile(
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=1,
+        )
+        self.create_subscription(
+            VehicleLocalPosition,
+            "/fmu/out/vehicle_local_position_v1",
+            self.vehicle_local_position_callback,
+            qos,
+        )
+
+        listen_ip = self.get_parameter("listen_ip").get_parameter_value().string_value
+        listen_port = self.get_parameter("listen_port").get_parameter_value().integer_value
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.bind((listen_ip, listen_port))
+        self.sock.setblocking(False)
+
+        timer_period = (
+            self.get_parameter("timer_period_s").get_parameter_value().double_value
+        )
+        self.create_timer(timer_period, self.poll_udp)
+        self.get_logger().info(
+            f"Logging payload swing metrics to {output_path} from UDP {listen_ip}:{listen_port}"
+        )
+
+    def vehicle_local_position_callback(self, msg):
+        if not (math.isfinite(msg.x) and math.isfinite(msg.y) and math.isfinite(msg.z)):
+            return
+        self.latest_uav = (float(msg.x), float(msg.y), -float(msg.z))
+
+    def poll_udp(self):
+        while True:
+            try:
+                data, _ = self.sock.recvfrom(2048)
+            except BlockingIOError:
+                break
+            payload_pose = self.parse_payload_pose(data)
+            if payload_pose is not None and self.latest_uav is not None:
+                self.write_sample(payload_pose)
+
+    def parse_payload_pose(self, data):
+        header_size = 8
+        if len(data) < header_size:
+            return None
+
+        _, name_size = struct.unpack_from("<II", data, 0)
+        poses_count_offset = header_size + name_size
+        if len(data) < poses_count_offset + 4:
+            return None
+
+        (poses_count,) = struct.unpack_from("<I", data, poses_count_offset)
+        if poses_count < 1:
+            return None
+
+        pose_offset = poses_count_offset + 4
+        pose_format = "<I4xdddddd"
+        pose_size = struct.calcsize(pose_format)
+        if len(data) < pose_offset + pose_size:
+            return None
+
+        _, x, y, z, _pitch, _yaw, _roll = struct.unpack_from(
+            pose_format, data, pose_offset
+        )
+        if not (math.isfinite(x) and math.isfinite(y) and math.isfinite(z)):
+            return None
+        return (x, y, z)
+
+    def write_sample(self, payload_pose):
+        uav_x, uav_y, uav_z = self.latest_uav
+        payload_x, payload_y, payload_z = payload_pose
+        dx = payload_x - uav_x
+        dy = payload_y - uav_y
+        dz = payload_z - uav_z
+        lateral = math.hypot(dx, dy)
+        cable_length = math.sqrt(dx * dx + dy * dy + dz * dz)
+        angle_deg = math.degrees(math.atan2(lateral, abs(dz)))
+        t_s = (self.get_clock().now().nanoseconds - self.start_time_ns) * 1e-9
+
+        self.writer.writerow(
+            [
+                f"{t_s:.6f}",
+                f"{uav_x:.6f}",
+                f"{uav_y:.6f}",
+                f"{uav_z:.6f}",
+                f"{payload_x:.6f}",
+                f"{payload_y:.6f}",
+                f"{payload_z:.6f}",
+                f"{dx:.6f}",
+                f"{dy:.6f}",
+                f"{dz:.6f}",
+                f"{cable_length:.6f}",
+                f"{lateral:.6f}",
+                f"{angle_deg:.6f}",
+            ]
+        )
+        self.samples += 1
+        if self.samples % 100 == 0:
+            self.csv_file.flush()
+
+    def destroy_node(self):
+        samples = self.samples
+        self.csv_file.flush()
+        self.csv_file.close()
+        self.sock.close()
+        if rclpy.ok():
+            self.get_logger().info(f"Payload swing logger wrote {samples} samples")
+        super().destroy_node()
+
+
+def main():
+    rclpy.init()
+    node = PayloadSwingLogger()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        if rclpy.ok():
+            rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

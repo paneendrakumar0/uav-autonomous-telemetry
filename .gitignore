@@ -1,0 +1,21 @@
+# ROS 2 build outputs
+build/
+install/
+log/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# PX4/Gazebo runtime logs
+*.ulg
+*.bag
+*.db3
+
+# Local editor files
+.vscode/
+.idea/
+*~
+
+# Large local simulator binaries should not be added here
+QGroundControl*.AppImage
