@@ -291,21 +291,4 @@ The current payload model is intentionally documented as a work in progress.
 
 Most likely root cause: the current payload SDF/joint setup is interfering with Gazebo vehicle dynamics or link-frame constraints.
 
-## Next Engineering Step
 
-Do not continue payload figure-8 tuning until hover passes.
-
-Recommended next sequence:
-
-1. Create a minimal payload model with a fixed payload mass only.
-2. Confirm it climbs to `z=-5 m` using `hover_offboard`.
-3. Replace the fixed payload with a simple revolute/universal pendulum.
-4. Validate Gazebo link poses for `iris::base_link`, `payload_cable`, and `slung_payload`.
-5. Rerun payload hover.
-6. Only then rerun payload figure-8.
-
-## Notes for Professor-Facing Updates
-
-Safe statement:
-
-> The baseline ROS 2/PX4 offboard figure-8 circuit is complete and quantitatively logged. I have also added the first slung-payload SITL model and payload swing logger. The payload model currently boots and accepts offboard commands, but hover validation shows that the current cable/joint physics still prevents proper climb. I isolated this by running the same hover controller on the no-payload model, which successfully reaches the commanded altitude. The next task is therefore to correct the payload SDF joint model before presenting a completed slung-payload figure-8.
