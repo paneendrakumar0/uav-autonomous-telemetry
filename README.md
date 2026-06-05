@@ -12,8 +12,8 @@ This repository captures the current project state, including runnable ROS 2 nod
 | ROS 2 offboard control bridge | Complete | MicroXRCEAgent and `/fmu/in/*`, `/fmu/out/*` topics verified |
 | Continuous figure-8 trajectory without payload | Complete | Tuned run: post-takeoff mean error `0.415 m`, RMS `0.442 m` |
 | Telemetry and plotting pipeline | Complete | CSV logs plus XY, XYZ-time, 3D, and error plots generated |
-| Slung-payload visual/nested model integration | Complete baseline | Nested `slung_payload_ball` can be present while Iris holds hover |
-| Physical payload joint validation | Blocked by Gazebo Classic joint physics | Free nested payload hovers; fixed/ball joint attachment prevents climb |
+| Slung-payload native model integration | Complete hover baseline | Native Iris-derived `iris_depth_payload` with internal `base_link -> slung_payload` ball joint hovers |
+| Physical payload joint validation | Hover solved | Native ball-joint payload reaches `-5 m` NED hover with post-12s mean error `0.061 m` |
 
 ## Repository Layout
 
@@ -42,6 +42,7 @@ This repository captures the current project state, including runnable ROS 2 nod
 |   |-- payload_hover_2026-06-05/
 |   |-- payload_hover_singlelink_2026-06-05/
 |   |-- payload_hover_nested_free_2026-06-05/
+|   |-- payload_hover_native_ball_nocollision_2026-06-05/
 |   `-- hover_control_check_2026-06-05/
 `-- tools/
     `-- legacy_plot_data.py
@@ -235,6 +236,41 @@ Artifacts:
 
 ![Payload isolation altitude comparison](reports/payload_hover_nested_free_2026-06-05/payload_isolation_altitude_comparison.png)
 
+### 8. Native Ball-Joint Payload Link Fix
+
+The payload-link issue was solved by replacing the wrapper/nested-Iris SDF with a native Iris-derived `iris_depth_payload.sdf`. The payload link now lives inside the same Gazebo model as `base_link`, and the physical payload joint is internal to the model.
+
+Fix:
+
+- Parent link: `base_link`
+- Child link: `slung_payload`
+- Joint type: `ball`
+- Payload mass: `0.05 kg`
+- Payload visual: 1 m cable plus orange payload sphere
+- Payload collision removed for the flight baseline to avoid ground-contact locking at spawn
+
+Result:
+
+- Final NED `z`: `-4.995 m`.
+- Post-12s mean tracking error: `0.061 m`.
+- Post-12s RMS tracking error: `0.069 m`.
+- Payload swing samples: `10467`.
+- GUI screenshot confirms the UAV hovering with a visible slung payload.
+
+Artifacts:
+
+- Report: [`reports/payload_hover_native_ball_nocollision_2026-06-05/NATIVE_PAYLOAD_LINK_FIX_REPORT.md`](reports/payload_hover_native_ball_nocollision_2026-06-05/NATIVE_PAYLOAD_LINK_FIX_REPORT.md)
+- Gazebo hover close-up: [`reports/payload_hover_native_ball_nocollision_2026-06-05/native_ball_gazebo_hover_closeup.png`](reports/payload_hover_native_ball_nocollision_2026-06-05/native_ball_gazebo_hover_closeup.png)
+- XYZ-time plot: [`reports/payload_hover_native_ball_nocollision_2026-06-05/native_ball_hover_xyz_vs_time.png`](reports/payload_hover_native_ball_nocollision_2026-06-05/native_ball_hover_xyz_vs_time.png)
+- XY drift plot: [`reports/payload_hover_native_ball_nocollision_2026-06-05/native_ball_hover_xy_drift.png`](reports/payload_hover_native_ball_nocollision_2026-06-05/native_ball_hover_xy_drift.png)
+- 3D hover plot: [`reports/payload_hover_native_ball_nocollision_2026-06-05/native_ball_payload_hover_3d.png`](reports/payload_hover_native_ball_nocollision_2026-06-05/native_ball_payload_hover_3d.png)
+- Payload swing plot: [`reports/payload_hover_native_ball_nocollision_2026-06-05/native_ball_payload_swing_metrics.png`](reports/payload_hover_native_ball_nocollision_2026-06-05/native_ball_payload_swing_metrics.png)
+- Altitude comparison: [`reports/payload_hover_native_ball_nocollision_2026-06-05/native_payload_link_fix_altitude_comparison.png`](reports/payload_hover_native_ball_nocollision_2026-06-05/native_payload_link_fix_altitude_comparison.png)
+
+![Native ball-joint payload hover close-up](reports/payload_hover_native_ball_nocollision_2026-06-05/native_ball_gazebo_hover_closeup.png)
+
+![Native ball-joint payload hover 3D](reports/payload_hover_native_ball_nocollision_2026-06-05/native_ball_payload_hover_3d.png)
+
 ## Installation
 
 ### 1. PX4 Autopilot
@@ -350,4 +386,3 @@ The current payload model is intentionally documented as a work in progress.
 - The payload model does not climb under the same hover controller.
 
 Most likely root cause: the current payload SDF/joint setup is interfering with Gazebo vehicle dynamics or link-frame constraints.
-
