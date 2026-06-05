@@ -13,7 +13,7 @@ This repository captures the current project state, including runnable ROS 2 nod
 | Continuous figure-8 trajectory without payload | Complete | Tuned run: post-takeoff mean error `0.415 m`, RMS `0.442 m` |
 | Telemetry and plotting pipeline | Complete | CSV logs plus XY, XYZ-time, 3D, and error plots generated |
 | Slung-payload model integration | Partial | Payload model boots and arms, but does not climb yet |
-| Payload hover validation | Blocked by payload SDF physics | Hover controller works on normal Iris, fails only with payload model |
+| Payload hover validation | Blocked by payload SDF physics | Hover controller works on normal Iris; payload hover and single-link tests fail only with payload model |
 
 ## Repository Layout
 
@@ -40,6 +40,7 @@ This repository captures the current project state, including runnable ROS 2 nod
 |   |-- fig8_run_2026-06-04/
 |   |-- fig8_metrics_tuned_2026-06-04/
 |   |-- payload_hover_2026-06-05/
+|   |-- payload_hover_singlelink_2026-06-05/
 |   `-- hover_control_check_2026-06-05/
 `-- tools/
     `-- legacy_plot_data.py
@@ -152,7 +153,38 @@ Artifacts:
 
 ![Payload hover validation](reports/payload_hover_2026-06-05/hover_xyz_vs_time.png)
 
-### 5. No-Payload Hover Control Check
+### 5. Single-Link Payload Debugging Pass
+
+The payload SDF was simplified from a two-link cable/body setup into a single ball-joint pendulum baseline. This was done to isolate whether the original two-joint payload chain was the cause of the failed climb.
+
+Result:
+
+- PX4 accepted offboard control, armed, and reported takeoff detection.
+- The slung payload is visible in Gazebo: drone body, cable, and orange payload mass.
+- The vehicle still stayed near ground level.
+- Final NED `z`: `0.028 m` against the target `-5.000 m`.
+- Post-12s mean tracking error: `5.008 m`.
+- Post-12s mean XY drift: `0.035 m`.
+
+Artifacts:
+
+- Report: [`reports/payload_hover_singlelink_2026-06-05/HOVER_SINGLELINK_REPORT.md`](reports/payload_hover_singlelink_2026-06-05/HOVER_SINGLELINK_REPORT.md)
+- Slung payload close-up: [`reports/payload_hover_singlelink_2026-06-05/gazebo_payload_slung_payload_closeup.png`](reports/payload_hover_singlelink_2026-06-05/gazebo_payload_slung_payload_closeup.png)
+- Gazebo window screenshot: [`reports/payload_hover_singlelink_2026-06-05/gazebo_payload_window.png`](reports/payload_hover_singlelink_2026-06-05/gazebo_payload_window.png)
+- XY drift plot: [`reports/payload_hover_singlelink_2026-06-05/hover_xy_drift.png`](reports/payload_hover_singlelink_2026-06-05/hover_xy_drift.png)
+- 3D hover trajectory: [`reports/payload_hover_singlelink_2026-06-05/payload_hover_3d.png`](reports/payload_hover_singlelink_2026-06-05/payload_hover_3d.png)
+- Payload relative motion 3D plot: [`reports/payload_hover_singlelink_2026-06-05/payload_relative_motion_3d.png`](reports/payload_hover_singlelink_2026-06-05/payload_relative_motion_3d.png)
+- Payload swing metrics: [`reports/payload_hover_singlelink_2026-06-05/payload_swing_metrics.png`](reports/payload_hover_singlelink_2026-06-05/payload_swing_metrics.png)
+
+This confirms the next engineering task is not the ROS 2 offboard node; it is the Gazebo Classic payload joint/frame setup.
+
+![Slung payload close-up](reports/payload_hover_singlelink_2026-06-05/gazebo_payload_slung_payload_closeup.png)
+
+![Single-link payload hover XY drift](reports/payload_hover_singlelink_2026-06-05/hover_xy_drift.png)
+
+![Single-link payload hover 3D trajectory](reports/payload_hover_singlelink_2026-06-05/payload_hover_3d.png)
+
+### 6. No-Payload Hover Control Check
 
 The exact same `hover_offboard` node was run on the known-good `iris_depth_camera` model.
 

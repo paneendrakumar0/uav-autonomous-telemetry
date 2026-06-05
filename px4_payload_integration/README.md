@@ -25,4 +25,4 @@ make px4_sitl_default -j2
 HEADLESS=1 make px4_sitl gazebo-classic_iris_depth_payload
 ```
 
-Current status: the payload target boots and accepts PX4 offboard arming, but hover validation shows that the SDF/joint physics still needs correction before payload figure-8 can be claimed as complete.
+Current status: the payload target boots and accepts PX4 offboard arming, and the slung payload is visible in Gazebo. Hover validation still shows that the vehicle remains near ground level, including with the simplified single-link pendulum baseline. The next required correction is the Gazebo Classic payload joint/frame physics before payload hover or payload figure-8 can be claimed as complete.

@@ -22,41 +22,6 @@
       </axis>
     </joint>
 
-    <link name="payload_cable">
-      <pose>0 0 0 0 0 0</pose>
-      <inertial>
-        <mass>0.001</mass>
-        <inertia>
-          <ixx>0.0017</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>0.0017</iyy>
-          <iyz>0</iyz>
-          <izz>0.000001</izz>
-        </inertia>
-      </inertial>
-      <visual name="payload_cable_visual">
-        <pose>0 0 -0.5 0 0 0</pose>
-        <geometry>
-          <cylinder>
-            <radius>0.01</radius>
-            <length>1.0</length>
-          </cylinder>
-        </geometry>
-        <material>
-          <script>
-            <name>Gazebo/Black</name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-          </script>
-        </material>
-      </visual>
-      <gravity>1</gravity>
-      <velocity_decay>
-        <linear>0.02</linear>
-        <angular>0.02</angular>
-      </velocity_decay>
-    </link>
-
     <link name="slung_payload">
       <pose>0 0 -1.0 0 0 0</pose>
       <inertial>
@@ -102,6 +67,21 @@
           </script>
         </material>
       </visual>
+      <visual name="payload_cable_visual">
+        <pose>0 0 0.5 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.01</radius>
+            <length>1.0</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Black</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
       <gravity>1</gravity>
       <velocity_decay>
         <linear>0.02</linear>
@@ -109,15 +89,10 @@
       </velocity_decay>
     </link>
 
-    <joint name="payload_mass_joint" type="fixed">
-      <parent>payload_cable</parent>
-      <child>slung_payload</child>
-    </joint>
-
     <joint name="slung_payload_joint" type="ball">
       <parent>iris::base_link</parent>
-      <child>payload_cable</child>
-      <pose>0 0 0 0 0 0</pose>
+      <child>slung_payload</child>
+      <pose>0 0 1.0 0 0 0</pose>
     </joint>
 
     <plugin name="payload_pose_sniffer" filename="libgazebo_pose_sniffer_plugin.so">
