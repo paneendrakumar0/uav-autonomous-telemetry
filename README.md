@@ -12,8 +12,8 @@ This repository captures the current project state, including runnable ROS 2 nod
 | ROS 2 offboard control bridge | Complete | MicroXRCEAgent and `/fmu/in/*`, `/fmu/out/*` topics verified |
 | Continuous figure-8 trajectory without payload | Complete | Tuned run: post-takeoff mean error `0.415 m`, RMS `0.442 m` |
 | Telemetry and plotting pipeline | Complete | CSV logs plus XY, XYZ-time, 3D, and error plots generated |
-| Slung-payload model integration | Partial | Payload model boots and arms, but does not climb yet |
-| Payload hover validation | Blocked by payload SDF physics | Hover controller works on normal Iris; payload hover and single-link tests fail only with payload model |
+| Slung-payload visual/nested model integration | Complete baseline | Nested `slung_payload_ball` can be present while Iris holds hover |
+| Physical payload joint validation | Blocked by Gazebo Classic joint physics | Free nested payload hovers; fixed/ball joint attachment prevents climb |
 
 ## Repository Layout
 
@@ -41,6 +41,7 @@ This repository captures the current project state, including runnable ROS 2 nod
 |   |-- fig8_metrics_tuned_2026-06-04/
 |   |-- payload_hover_2026-06-05/
 |   |-- payload_hover_singlelink_2026-06-05/
+|   |-- payload_hover_nested_free_2026-06-05/
 |   `-- hover_control_check_2026-06-05/
 `-- tools/
     `-- legacy_plot_data.py
@@ -207,6 +208,33 @@ Artifacts:
 
 ![No-payload hover 3D trajectory](reports/hover_control_check_2026-06-05/hover_control_check_3d.png)
 
+### 7. Payload Joint Isolation
+
+The payload model was moved into its own nested Gazebo model, `slung_payload_ball`, to avoid making the payload a top-level link in the PX4 vehicle wrapper.
+
+Result:
+
+- The same `iris_depth_payload` target hovers correctly when the nested payload is present but not physically jointed.
+- Final NED `z`: `-5.000 m`.
+- Post-12s mean tracking error: `0.062 m`.
+- Post-12s RMS tracking error: `0.069 m`.
+- Adding a fixed joint from `iris::base_link` to the nested payload still prevents climb.
+
+Current finding: the next blocker is specifically the direct Gazebo Classic payload joint attachment. The target, airframe, ROS 2 offboard node, and nested payload visual/model are healthy.
+
+Artifacts:
+
+- Report: [`reports/payload_hover_nested_free_2026-06-05/PAYLOAD_JOINT_ISOLATION_REPORT.md`](reports/payload_hover_nested_free_2026-06-05/PAYLOAD_JOINT_ISOLATION_REPORT.md)
+- XYZ-time plot: [`reports/payload_hover_nested_free_2026-06-05/nested_free_hover_xyz_vs_time.png`](reports/payload_hover_nested_free_2026-06-05/nested_free_hover_xyz_vs_time.png)
+- XY drift plot: [`reports/payload_hover_nested_free_2026-06-05/nested_free_hover_xy_drift.png`](reports/payload_hover_nested_free_2026-06-05/nested_free_hover_xy_drift.png)
+- 3D hover plot: [`reports/payload_hover_nested_free_2026-06-05/nested_free_payload_hover_3d.png`](reports/payload_hover_nested_free_2026-06-05/nested_free_payload_hover_3d.png)
+- Isolation altitude comparison: [`reports/payload_hover_nested_free_2026-06-05/payload_isolation_altitude_comparison.png`](reports/payload_hover_nested_free_2026-06-05/payload_isolation_altitude_comparison.png)
+- Isolation error comparison: [`reports/payload_hover_nested_free_2026-06-05/payload_isolation_error_comparison.png`](reports/payload_hover_nested_free_2026-06-05/payload_isolation_error_comparison.png)
+
+![Nested free payload hover 3D](reports/payload_hover_nested_free_2026-06-05/nested_free_payload_hover_3d.png)
+
+![Payload isolation altitude comparison](reports/payload_hover_nested_free_2026-06-05/payload_isolation_altitude_comparison.png)
+
 ## Installation
 
 ### 1. PX4 Autopilot
@@ -322,5 +350,4 @@ The current payload model is intentionally documented as a work in progress.
 - The payload model does not climb under the same hover controller.
 
 Most likely root cause: the current payload SDF/joint setup is interfering with Gazebo vehicle dynamics or link-frame constraints.
-
 

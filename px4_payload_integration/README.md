@@ -20,9 +20,13 @@ mkdir -p "$PX4_DIR/Tools/simulation/gazebo-classic/sitl_gazebo-classic/models/ir
 cp Tools/simulation/gazebo-classic/sitl_gazebo-classic/models/iris_depth_payload/* \
   "$PX4_DIR/Tools/simulation/gazebo-classic/sitl_gazebo-classic/models/iris_depth_payload/"
 
+mkdir -p "$PX4_DIR/Tools/simulation/gazebo-classic/sitl_gazebo-classic/models/slung_payload_ball"
+cp Tools/simulation/gazebo-classic/sitl_gazebo-classic/models/slung_payload_ball/* \
+  "$PX4_DIR/Tools/simulation/gazebo-classic/sitl_gazebo-classic/models/slung_payload_ball/"
+
 cd "$PX4_DIR"
 make px4_sitl_default -j2
 HEADLESS=1 make px4_sitl gazebo-classic_iris_depth_payload
 ```
 
-Current status: the payload target boots and accepts PX4 offboard arming, and the slung payload is visible in Gazebo. Hover validation still shows that the vehicle remains near ground level, including with the simplified single-link pendulum baseline. The next required correction is the Gazebo Classic payload joint/frame physics before payload hover or payload figure-8 can be claimed as complete.
+Current status: the payload target boots, accepts PX4 offboard arming, and hovers correctly with the nested `slung_payload_ball` model present but not physically jointed. Direct Gazebo Classic joints from `iris::base_link` to the payload, including fixed and ball-joint variants, prevent the vehicle from climbing. The next required correction is a safer physical coupling method before payload hover or payload figure-8 can be claimed as a true slung-payload result.
