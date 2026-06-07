@@ -4,6 +4,8 @@ ROS 2 + PX4 SITL workspace for autonomous UAV offboard control, telemetry loggin
 
 This repository captures the current project state, including runnable ROS 2 nodes, PX4/Gazebo payload integration files, generated CSV logs, and plot-based experiment reports.
 
+Final PDF report: [`reports/final_research_report_2026-06-07/uav_slung_payload_sitl_research_report_2026-06-07.pdf`](reports/final_research_report_2026-06-07/uav_slung_payload_sitl_research_report_2026-06-07.pdf)
+
 ## Project Status
 
 | Stage | Status | Evidence |
