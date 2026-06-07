@@ -14,6 +14,7 @@ This repository captures the current project state, including runnable ROS 2 nod
 | Telemetry and plotting pipeline | Complete | CSV logs plus XY, XYZ-time, 3D, and error plots generated |
 | Slung-payload native model integration | Complete hover baseline | Native Iris-derived `iris_depth_payload` with internal `base_link -> slung_payload` ball joint hovers |
 | Physical payload joint validation | Hover solved | Native ball-joint payload reaches `-5 m` NED hover with post-12s mean error `0.061 m` |
+| Slung-payload Figure-8 validation | Complete baseline | Native ball-joint payload completed sustained 8-shaped trajectory with post-25s mean error `0.462 m` |
 
 ## Repository Layout
 
@@ -43,6 +44,7 @@ This repository captures the current project state, including runnable ROS 2 nod
 |   |-- payload_hover_singlelink_2026-06-05/
 |   |-- payload_hover_nested_free_2026-06-05/
 |   |-- payload_hover_native_ball_nocollision_2026-06-05/
+|   |-- payload_figure8_native_ball_2026-06-07/
 |   `-- hover_control_check_2026-06-05/
 `-- tools/
     `-- legacy_plot_data.py
@@ -270,6 +272,36 @@ Artifacts:
 ![Native ball-joint payload hover close-up](reports/payload_hover_native_ball_nocollision_2026-06-05/native_ball_gazebo_hover_closeup.png)
 
 ![Native ball-joint payload hover 3D](reports/payload_hover_native_ball_nocollision_2026-06-05/native_ball_payload_hover_3d.png)
+
+### 9. Native Ball-Joint Payload Figure-8
+
+The fixed native `iris_depth_payload` model was run through Professor Zavoli's requested 8-shaped trajectory using PX4 offboard position/velocity setpoints.
+
+Result:
+
+- Duration: `150.91 s`.
+- Post-25s mean 3D tracking error: `0.462 m`.
+- Post-25s RMS 3D tracking error: `0.493 m`.
+- Post-25s maximum 3D tracking error: `0.796 m`.
+- Mean post-25s altitude: `-4.996 m` NED.
+- Actual X range: `-5.489 m` to `5.291 m`.
+- Actual Y range: `-3.158 m` to `3.083 m`.
+- Payload swing samples: `37644`.
+
+Artifacts:
+
+- Report: [`reports/payload_figure8_native_ball_2026-06-07/PAYLOAD_FIGURE8_VALIDATION_REPORT.md`](reports/payload_figure8_native_ball_2026-06-07/PAYLOAD_FIGURE8_VALIDATION_REPORT.md)
+- XY tracking: [`reports/payload_figure8_native_ball_2026-06-07/payload_figure8_xy_tracking.png`](reports/payload_figure8_native_ball_2026-06-07/payload_figure8_xy_tracking.png)
+- Steady XY tracking: [`reports/payload_figure8_native_ball_2026-06-07/payload_figure8_xy_tracking_steady.png`](reports/payload_figure8_native_ball_2026-06-07/payload_figure8_xy_tracking_steady.png)
+- XYZ vs time: [`reports/payload_figure8_native_ball_2026-06-07/payload_figure8_xyz_vs_time.png`](reports/payload_figure8_native_ball_2026-06-07/payload_figure8_xyz_vs_time.png)
+- 3D tracking: [`reports/payload_figure8_native_ball_2026-06-07/payload_figure8_3d_tracking.png`](reports/payload_figure8_native_ball_2026-06-07/payload_figure8_3d_tracking.png)
+- Tracking error: [`reports/payload_figure8_native_ball_2026-06-07/payload_figure8_tracking_error.png`](reports/payload_figure8_native_ball_2026-06-07/payload_figure8_tracking_error.png)
+- Payload swing: [`reports/payload_figure8_native_ball_2026-06-07/payload_figure8_swing_metrics.png`](reports/payload_figure8_native_ball_2026-06-07/payload_figure8_swing_metrics.png)
+- Payload relative motion: [`reports/payload_figure8_native_ball_2026-06-07/payload_figure8_relative_motion_3d.png`](reports/payload_figure8_native_ball_2026-06-07/payload_figure8_relative_motion_3d.png)
+
+![Native payload Figure-8 steady XY](reports/payload_figure8_native_ball_2026-06-07/payload_figure8_xy_tracking_steady.png)
+
+![Native payload Figure-8 3D](reports/payload_figure8_native_ball_2026-06-07/payload_figure8_3d_tracking.png)
 
 ## Installation
 
