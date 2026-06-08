@@ -20,6 +20,7 @@ Latest controller benchmark: [`reports/controller_benchmark_2026-06-08/CONTROLLE
 | Physical payload joint validation | Hover solved | Native ball-joint payload reaches `-5 m` NED hover with post-12s mean error `0.061 m` |
 | Slung-payload Figure-8 validation | Complete baseline | Native ball-joint payload completed sustained 8-shaped trajectory with post-25s mean error `0.462 m` |
 | Controller benchmark and next-stage plan | Complete | Baseline comparison and geometric-controller roadmap added |
+| Geometric attitude/thrust controller prototype | Build complete | Separate SE(3)-style attitude controller added for commissioning against the baseline |
 
 ## Repository Layout
 
@@ -33,12 +34,14 @@ Latest controller benchmark: [`reports/controller_benchmark_2026-06-08/CONTROLLE
 |       |   |-- telemetry_logger.cpp
 |       |   |-- figure8_offboard.cpp
 |       |   |-- figure8_metrics_logger.cpp
-|       |   `-- hover_offboard.cpp
+|       |   |-- hover_offboard.cpp
+|       |   `-- geometric_figure8_attitude.cpp
 |       |-- scripts/
 |       |   `-- payload_swing_logger
 |       `-- launch/
 |           |-- figure8_experiment.launch.py
 |           |-- figure8_payload_experiment.launch.py
+|           |-- geometric_figure8_experiment.launch.py
 |           `-- payload_hover_experiment.launch.py
 |-- px4_payload_integration/
 |   `-- ... PX4 files to copy into PX4-Autopilot ...
@@ -51,7 +54,8 @@ Latest controller benchmark: [`reports/controller_benchmark_2026-06-08/CONTROLLE
 |   |-- payload_hover_native_ball_nocollision_2026-06-05/
 |   |-- payload_figure8_native_ball_2026-06-07/
 |   |-- hover_control_check_2026-06-05/
-|   `-- controller_benchmark_2026-06-08/
+|   |-- controller_benchmark_2026-06-08/
+|   `-- geometric_controller_stage_2026-06-08/
 `-- tools/
     |-- legacy_plot_data.py
     `-- summarize_benchmarks.py
@@ -80,6 +84,7 @@ Latest controller benchmark: [`reports/controller_benchmark_2026-06-08/CONTROLLE
 | `figure8_offboard` | `ros2_ws/src/uav_control/src/figure8_offboard.cpp` | Continuous lemniscate/figure-8 controller |
 | `figure8_metrics_logger` | `ros2_ws/src/uav_control/src/figure8_metrics_logger.cpp` | Logs actual vs reference trajectory metrics |
 | `hover_offboard` | `ros2_ws/src/uav_control/src/hover_offboard.cpp` | Constant-position hover validation controller |
+| `geometric_figure8_attitude` | `ros2_ws/src/uav_control/src/geometric_figure8_attitude.cpp` | SE(3)-style attitude/thrust Figure-8 prototype |
 | `payload_swing_logger` | `ros2_ws/src/uav_control/scripts/payload_swing_logger` | Parses Gazebo pose sniffer UDP packets and logs payload swing estimates |
 
 ## Key Results
@@ -328,6 +333,18 @@ Key comparison:
 | Native ball-joint payload hover | `0.061 m` | `0.069 m` | `-4.995 m` |
 | Native ball-joint payload Figure-8 | `0.462 m` | `0.493 m` | `-4.987 m` |
 
+### 11. Geometric Attitude/Thrust Prototype
+
+The next controller stage has been started as a separate ROS 2 node so the validated PX4 position/velocity baseline remains intact. The prototype computes a desired acceleration from position/velocity tracking error, converts it into an attitude quaternion and normalized thrust command, and publishes PX4 `VehicleAttitudeSetpoint` messages.
+
+Artifacts:
+
+- Prototype report: [`reports/geometric_controller_stage_2026-06-08/GEOMETRIC_CONTROLLER_PROTOTYPE.md`](reports/geometric_controller_stage_2026-06-08/GEOMETRIC_CONTROLLER_PROTOTYPE.md)
+- Controller source: [`ros2_ws/src/uav_control/src/geometric_figure8_attitude.cpp`](ros2_ws/src/uav_control/src/geometric_figure8_attitude.cpp)
+- Launch file: [`ros2_ws/src/uav_control/launch/geometric_figure8_experiment.launch.py`](ros2_ws/src/uav_control/launch/geometric_figure8_experiment.launch.py)
+
+Status: build validated; SITL flight commissioning is the next step before comparing it against the proven baseline.
+
 ## Installation
 
 ### 1. PX4 Autopilot
@@ -410,6 +427,21 @@ source install/setup.zsh
 ros2 launch uav_control figure8_experiment.launch.py \
   metrics_path:=~/PX4-Autopilot/reports/figure8_tracking_metrics.csv \
   omega:=0.25
+```
+
+### Terminal 3 Alternative: Geometric Attitude Prototype
+
+```bash
+cd ~/ros2_ws
+source /opt/ros/humble/setup.zsh
+source install/setup.zsh
+ros2 launch uav_control geometric_figure8_experiment.launch.py \
+  metrics_path:=~/PX4-Autopilot/reports/geometric_figure8_tracking_metrics.csv \
+  payload_metrics_path:=~/PX4-Autopilot/reports/geometric_payload_swing_metrics.csv \
+  amplitude:=5.0 \
+  omega:=0.20 \
+  altitude_ned:=-5.0 \
+  hover_thrust:=0.62
 ```
 
 ### Terminal 3 Alternative: Hover Validation

@@ -20,6 +20,10 @@ ament_target_dependencies(figure8_offboard rclcpp px4_msgs)
 add_executable(hover_offboard src/hover_offboard.cpp)
 ament_target_dependencies(hover_offboard rclcpp px4_msgs)
 
+# Geometric attitude/thrust Figure-8 prototype
+add_executable(geometric_figure8_attitude src/geometric_figure8_attitude.cpp)
+ament_target_dependencies(geometric_figure8_attitude rclcpp px4_msgs)
+
 # The New Telemetry Logger
 add_executable(telemetry_logger src/telemetry_logger.cpp)
 ament_target_dependencies(telemetry_logger rclcpp px4_msgs)
@@ -32,6 +36,7 @@ install(TARGETS
   offboard_control
   figure8_offboard
   hover_offboard
+  geometric_figure8_attitude
   telemetry_logger
   figure8_metrics_logger
   DESTINATION lib/${PROJECT_NAME}
