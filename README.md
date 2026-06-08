@@ -22,6 +22,7 @@ Latest controller benchmark: [`reports/controller_benchmark_2026-06-08/CONTROLLE
 | Controller benchmark and next-stage plan | Complete | Baseline comparison and geometric-controller roadmap added |
 | Geometric attitude/thrust controller prototype | No-payload commissioned | Versioned attitude-topic fix validated; tuned post-20s mean error `0.212 m` |
 | Geometric slung-payload Figure-8 | Complete first pass | Payload run succeeded with post-20s mean error `0.315 m` |
+| Matched-rate controller comparison | Complete | At `omega=0.25`, geometric control reduced mean payload tracking error by `20.2%` |
 
 ## Repository Layout
 
@@ -57,7 +58,8 @@ Latest controller benchmark: [`reports/controller_benchmark_2026-06-08/CONTROLLE
 |   |-- hover_control_check_2026-06-05/
 |   |-- controller_benchmark_2026-06-08/
 |   |-- geometric_controller_stage_2026-06-08/
-|   `-- payload_geometric_figure8_2026-06-08/
+|   |-- payload_geometric_figure8_2026-06-08/
+|   `-- payload_geometric_matched_omega025_2026-06-08/
 `-- tools/
     |-- legacy_plot_data.py
     `-- summarize_benchmarks.py
@@ -374,6 +376,26 @@ Comparison:
 | Geometric attitude/thrust | yes | `0.20` | `0.315 m` | `0.322 m` | `0.482 m` | `-4.864 m` |
 
 Status: first slung-payload geometric-controller pass is complete. A matched-rate comparison is needed before making a final controller superiority claim.
+
+### 13. Matched-Rate Controller Comparison
+
+The geometric attitude/thrust controller was rerun at the same angular rate as the original payload baseline, `omega=0.25 rad/s`.
+
+Artifacts:
+
+- Report: [`reports/payload_geometric_matched_omega025_2026-06-08/MATCHED_RATE_CONTROLLER_COMPARISON.md`](reports/payload_geometric_matched_omega025_2026-06-08/MATCHED_RATE_CONTROLLER_COMPARISON.md)
+- XY comparison: [`reports/payload_geometric_matched_omega025_2026-06-08/matched_payload_xy_tracking_steady.png`](reports/payload_geometric_matched_omega025_2026-06-08/matched_payload_xy_tracking_steady.png)
+- 3D comparison: [`reports/payload_geometric_matched_omega025_2026-06-08/matched_payload_3d_tracking.png`](reports/payload_geometric_matched_omega025_2026-06-08/matched_payload_3d_tracking.png)
+- Error/altitude comparison: [`reports/payload_geometric_matched_omega025_2026-06-08/matched_payload_error_altitude.png`](reports/payload_geometric_matched_omega025_2026-06-08/matched_payload_error_altitude.png)
+
+Matched-rate result:
+
+| Controller | Omega | Mean 3D Error | RMS 3D Error | Max 3D Error | Mean Z NED |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| PX4 position/velocity | `0.25` | `0.462 m` | `0.493 m` | `0.796 m` | `-4.996 m` |
+| Geometric attitude/thrust | `0.25` | `0.369 m` | `0.378 m` | `0.624 m` | `-4.867 m` |
+
+This matched-rate run reduces mean payload tracking error by `20.2%`. The geometric controller still holds slightly lower than the `-5 m` target, so the next stage is repeated trials and payload-state calibration.
 
 ## Installation
 
