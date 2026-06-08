@@ -634,6 +634,7 @@
       <pose_receiver_ip>127.0.0.1</pose_receiver_ip>
       <pose_receiver_port>7001</pose_receiver_port>
       <vehicle_name>iris_depth_payload</vehicle_name>
+      <tracked_link>base_link</tracked_link>
       <tracked_link>slung_payload</tracked_link>
     </plugin>
     <static>0</static>

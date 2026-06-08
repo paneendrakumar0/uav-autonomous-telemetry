@@ -23,6 +23,7 @@ Latest controller benchmark: [`reports/controller_benchmark_2026-06-08/CONTROLLE
 | Geometric attitude/thrust controller prototype | No-payload commissioned | Versioned attitude-topic fix validated; tuned post-20s mean error `0.212 m` |
 | Geometric slung-payload Figure-8 | Complete first pass | Payload run succeeded with post-20s mean error `0.315 m` |
 | Matched-rate controller comparison | Complete | At `omega=0.25`, geometric control reduced mean payload tracking error by `20.2%` |
+| Payload swing instrumentation | Figure-8 calibrated | Same-frame Gazebo logger validated; geometric Figure-8 mean cable length `1.001 m`, mean cable angle `31.119 deg` |
 
 ## Repository Layout
 
@@ -59,7 +60,8 @@ Latest controller benchmark: [`reports/controller_benchmark_2026-06-08/CONTROLLE
 |   |-- controller_benchmark_2026-06-08/
 |   |-- geometric_controller_stage_2026-06-08/
 |   |-- payload_geometric_figure8_2026-06-08/
-|   `-- payload_geometric_matched_omega025_2026-06-08/
+|   |-- payload_geometric_matched_omega025_2026-06-08/
+|   `-- payload_swing_instrumentation_2026-06-08/
 `-- tools/
     |-- legacy_plot_data.py
     `-- summarize_benchmarks.py
@@ -397,6 +399,49 @@ Matched-rate result:
 
 This matched-rate run reduces mean payload tracking error by `20.2%`. The geometric controller still holds slightly lower than the `-5 m` target, so the next stage is repeated trials and payload-state calibration.
 
+### 14. Payload Swing Instrumentation Update
+
+The payload swing logger was upgraded after the matched-rate comparison to remove a frame/origin mismatch in cable-state estimation.
+
+Artifacts:
+
+- Report: [`reports/payload_swing_instrumentation_2026-06-08/PAYLOAD_SWING_INSTRUMENTATION_UPDATE.md`](reports/payload_swing_instrumentation_2026-06-08/PAYLOAD_SWING_INSTRUMENTATION_UPDATE.md)
+- Calibrated swing metrics: [`reports/payload_swing_instrumentation_2026-06-08/calibrated_hover/calibrated_payload_swing_metrics.png`](reports/payload_swing_instrumentation_2026-06-08/calibrated_hover/calibrated_payload_swing_metrics.png)
+- Payload link-pair 3D: [`reports/payload_swing_instrumentation_2026-06-08/calibrated_hover/calibrated_payload_link_pair_3d.png`](reports/payload_swing_instrumentation_2026-06-08/calibrated_hover/calibrated_payload_link_pair_3d.png)
+- Calibrated Figure-8 swing metrics: [`reports/payload_swing_instrumentation_2026-06-08/calibrated_geometric_omega025/calibrated_geometric_swing_metrics.png`](reports/payload_swing_instrumentation_2026-06-08/calibrated_geometric_omega025/calibrated_geometric_swing_metrics.png)
+- Calibrated Figure-8 3D tracking: [`reports/payload_swing_instrumentation_2026-06-08/calibrated_geometric_omega025/calibrated_geometric_3d_tracking.png`](reports/payload_swing_instrumentation_2026-06-08/calibrated_geometric_omega025/calibrated_geometric_3d_tracking.png)
+
+Change:
+
+- Gazebo pose sniffer now tracks both `base_link` and `slung_payload`.
+- `payload_swing_logger` computes cable vector from the same Gazebo link-pose frame when both links are present.
+- Old PX4-local-position reconstruction remains as `px4_local_fallback` for backward compatibility.
+
+Calibrated hover result:
+
+| Metric | Value |
+| --- | ---: |
+| Pose source | `gazebo_link_pair` |
+| Mean cable length | `1.000 m` |
+| Mean lateral swing | `0.015 m` |
+| Mean cable angle | `0.875 deg` |
+| Mean hover tracking error | `0.065 m` |
+
+Status: hover swing instrumentation is calibrated. The matched-rate Figure-8 tracking plots remain valid; the older cable-angle and lateral-swing values should be considered diagnostic unless their CSVs were generated with `pose_source=gazebo_link_pair`.
+
+Calibrated matched-rate geometric Figure-8 result:
+
+| Metric | Value |
+| --- | ---: |
+| Pose source | `gazebo_link_pair` |
+| Mean 3D tracking error | `0.367 m` |
+| RMS 3D tracking error | `0.375 m` |
+| Mean cable length | `1.001 m` |
+| Mean lateral swing | `0.514 m` |
+| Mean cable angle | `31.119 deg` |
+
+Status: geometric Figure-8 swing instrumentation is calibrated. The next fair swing comparison is to rerun the PX4 position/velocity baseline with the same corrected logger.
+
 ## Installation
 
 ### 1. PX4 Autopilot
@@ -521,8 +566,8 @@ HEADLESS=1 make px4_sitl gazebo-classic_iris_depth_payload
 
 The current payload model flies and completes the requested Figure-8 circuit, but several research limitations remain before claiming active payload-swing suppression.
 
-- The current controller is a PX4 offboard position/velocity setpoint baseline, not yet a geometric attitude/thrust controller.
-- Payload swing measurements are diagnostic because they are reconstructed from Gazebo pose-sniffer packets and still need frame/cable-length calibration.
+- The geometric attitude/thrust controller is implemented and has one matched-rate payload comparison; repeated trials are still needed before strong statistical claims.
+- Older payload swing measurements are diagnostic because they mixed Gazebo payload pose with PX4 local position. The logger has now been upgraded for same-frame Gazebo link-pair measurements, but the matched-rate run still needs to be repeated with the upgraded logger.
 - Payload collision is disabled in the current flight baseline to avoid Gazebo Classic ground-contact locking at spawn.
 - The present evidence validates trajectory tracking with a slung payload; the next research step is to compare this baseline against a geometric or payload-aware controller.
 
