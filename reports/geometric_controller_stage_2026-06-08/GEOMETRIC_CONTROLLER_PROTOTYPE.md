@@ -86,4 +86,12 @@ Recommended validation sequence:
 - Code added.
 - Launch file added.
 - Build validation completed with `colcon build --packages-select uav_control`.
-- Flight validation is intentionally still pending; the proven PX4 position/velocity controller remains the current research baseline until this prototype is tuned in SITL.
+- No-payload SITL commissioning attempted.
+- The prototype enters/requests Offboard and publishes the Figure-8 reference stream, but the vehicle does not yet climb under attitude/thrust control.
+- PX4 `trajectory_setpoint` was verified fresh during the follow-up run, while PX4 `vehicle_attitude_setpoint` remained stale. The next blocker is therefore the attitude-setpoint ingestion path, not trajectory generation or payload dynamics.
+- The proven PX4 position/velocity controller remains the current research baseline until this prototype is commissioned successfully.
+
+## Commissioning Evidence
+
+- Initial no-payload run: `no_payload_commissioning/NO_PAYLOAD_COMMISSIONING_REPORT.md`
+- Mode-before-arm follow-up: `no_payload_commissioning_mode_first/MODE_FIRST_FOLLOWUP_REPORT.md`
