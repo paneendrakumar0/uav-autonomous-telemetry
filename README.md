@@ -21,6 +21,7 @@ Latest controller benchmark: [`reports/controller_benchmark_2026-06-08/CONTROLLE
 | Slung-payload Figure-8 validation | Complete baseline | Native ball-joint payload completed sustained 8-shaped trajectory with post-25s mean error `0.462 m` |
 | Controller benchmark and next-stage plan | Complete | Baseline comparison and geometric-controller roadmap added |
 | Geometric attitude/thrust controller prototype | No-payload commissioned | Versioned attitude-topic fix validated; tuned post-20s mean error `0.212 m` |
+| Geometric slung-payload Figure-8 | Complete first pass | Payload run succeeded with post-20s mean error `0.315 m` |
 
 ## Repository Layout
 
@@ -55,7 +56,8 @@ Latest controller benchmark: [`reports/controller_benchmark_2026-06-08/CONTROLLE
 |   |-- payload_figure8_native_ball_2026-06-07/
 |   |-- hover_control_check_2026-06-05/
 |   |-- controller_benchmark_2026-06-08/
-|   `-- geometric_controller_stage_2026-06-08/
+|   |-- geometric_controller_stage_2026-06-08/
+|   `-- payload_geometric_figure8_2026-06-08/
 `-- tools/
     |-- legacy_plot_data.py
     `-- summarize_benchmarks.py
@@ -351,6 +353,27 @@ Commissioning result:
 | Tuned attitude topic | `0.70` | `0.212 m` | `0.224 m` | `0.353 m` | `-4.922 m` |
 
 Status: no-payload attitude/thrust commissioning is complete. The next test is the same controller on the native ball-joint slung-payload model.
+
+### 12. Geometric Slung-Payload Figure-8
+
+The tuned geometric attitude/thrust controller was then tested on the native ball-joint slung-payload vehicle.
+
+Artifacts:
+
+- Report: [`reports/payload_geometric_figure8_2026-06-08/PAYLOAD_GEOMETRIC_FIGURE8_REPORT.md`](reports/payload_geometric_figure8_2026-06-08/PAYLOAD_GEOMETRIC_FIGURE8_REPORT.md)
+- XY tracking: [`reports/payload_geometric_figure8_2026-06-08/payload_geometric_xy_tracking_steady.png`](reports/payload_geometric_figure8_2026-06-08/payload_geometric_xy_tracking_steady.png)
+- 3D tracking: [`reports/payload_geometric_figure8_2026-06-08/payload_geometric_3d_tracking.png`](reports/payload_geometric_figure8_2026-06-08/payload_geometric_3d_tracking.png)
+- XYZ/error plot: [`reports/payload_geometric_figure8_2026-06-08/payload_geometric_xyz_error.png`](reports/payload_geometric_figure8_2026-06-08/payload_geometric_xyz_error.png)
+- Swing diagnostics: [`reports/payload_geometric_figure8_2026-06-08/payload_geometric_swing_diagnostics.png`](reports/payload_geometric_figure8_2026-06-08/payload_geometric_swing_diagnostics.png)
+
+Comparison:
+
+| Controller | Payload | Omega | Mean 3D Error | RMS 3D Error | Max 3D Error | Mean Z NED |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| PX4 position/velocity | yes | `0.25` | `0.462 m` | `0.493 m` | `0.796 m` | `-4.996 m` |
+| Geometric attitude/thrust | yes | `0.20` | `0.315 m` | `0.322 m` | `0.482 m` | `-4.864 m` |
+
+Status: first slung-payload geometric-controller pass is complete. A matched-rate comparison is needed before making a final controller superiority claim.
 
 ## Installation
 
