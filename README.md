@@ -6,6 +6,8 @@ This repository captures the current project state, including runnable ROS 2 nod
 
 Final PDF report: [`reports/final_research_report_2026-06-07/uav_slung_payload_sitl_research_report_2026-06-07.pdf`](reports/final_research_report_2026-06-07/uav_slung_payload_sitl_research_report_2026-06-07.pdf)
 
+Latest controller benchmark: [`reports/controller_benchmark_2026-06-08/CONTROLLER_BENCHMARK_SUMMARY.md`](reports/controller_benchmark_2026-06-08/CONTROLLER_BENCHMARK_SUMMARY.md)
+
 ## Project Status
 
 | Stage | Status | Evidence |
@@ -17,6 +19,7 @@ Final PDF report: [`reports/final_research_report_2026-06-07/uav_slung_payload_s
 | Slung-payload native model integration | Complete hover baseline | Native Iris-derived `iris_depth_payload` with internal `base_link -> slung_payload` ball joint hovers |
 | Physical payload joint validation | Hover solved | Native ball-joint payload reaches `-5 m` NED hover with post-12s mean error `0.061 m` |
 | Slung-payload Figure-8 validation | Complete baseline | Native ball-joint payload completed sustained 8-shaped trajectory with post-25s mean error `0.462 m` |
+| Controller benchmark and next-stage plan | Complete | Baseline comparison and geometric-controller roadmap added |
 
 ## Repository Layout
 
@@ -47,9 +50,11 @@ Final PDF report: [`reports/final_research_report_2026-06-07/uav_slung_payload_s
 |   |-- payload_hover_nested_free_2026-06-05/
 |   |-- payload_hover_native_ball_nocollision_2026-06-05/
 |   |-- payload_figure8_native_ball_2026-06-07/
-|   `-- hover_control_check_2026-06-05/
+|   |-- hover_control_check_2026-06-05/
+|   `-- controller_benchmark_2026-06-08/
 `-- tools/
-    `-- legacy_plot_data.py
+    |-- legacy_plot_data.py
+    `-- summarize_benchmarks.py
 ```
 
 ## System Architecture
@@ -305,6 +310,24 @@ Artifacts:
 
 ![Native payload Figure-8 3D](reports/payload_figure8_native_ball_2026-06-07/payload_figure8_3d_tracking.png)
 
+### 10. Controller Benchmark and Next Stage
+
+The completed runs were consolidated into a single benchmark view before moving into controller redesign. This creates a clear baseline for comparing future geometric or payload-aware controllers.
+
+Artifacts:
+
+- Benchmark summary: [`reports/controller_benchmark_2026-06-08/CONTROLLER_BENCHMARK_SUMMARY.md`](reports/controller_benchmark_2026-06-08/CONTROLLER_BENCHMARK_SUMMARY.md)
+- Next-stage roadmap: [`reports/controller_benchmark_2026-06-08/NEXT_STAGE_CONTROLLER_ROADMAP.md`](reports/controller_benchmark_2026-06-08/NEXT_STAGE_CONTROLLER_ROADMAP.md)
+- Benchmark generator: [`tools/summarize_benchmarks.py`](tools/summarize_benchmarks.py)
+
+Key comparison:
+
+| Case | Steady Mean 3D Error | Steady RMS 3D Error | Final Z NED |
+| --- | ---: | ---: | ---: |
+| No-payload Figure-8 tuned baseline | `0.415 m` | `0.442 m` | `-4.983 m` |
+| Native ball-joint payload hover | `0.061 m` | `0.069 m` | `-4.995 m` |
+| Native ball-joint payload Figure-8 | `0.462 m` | `0.493 m` | `-4.987 m` |
+
 ## Installation
 
 ### 1. PX4 Autopilot
@@ -412,11 +435,11 @@ HEADLESS=1 make px4_sitl gazebo-classic_iris_depth_payload
 
 ## Known Limitations
 
-The current payload model is intentionally documented as a work in progress.
+The current payload model flies and completes the requested Figure-8 circuit, but several research limitations remain before claiming active payload-swing suppression.
 
-- The payload airframe boots and arms.
-- The payload logger receives Gazebo pose sniffer packets.
-- The hover controller works on the no-payload model.
-- The payload model does not climb under the same hover controller.
+- The current controller is a PX4 offboard position/velocity setpoint baseline, not yet a geometric attitude/thrust controller.
+- Payload swing measurements are diagnostic because they are reconstructed from Gazebo pose-sniffer packets and still need frame/cable-length calibration.
+- Payload collision is disabled in the current flight baseline to avoid Gazebo Classic ground-contact locking at spawn.
+- The present evidence validates trajectory tracking with a slung payload; the next research step is to compare this baseline against a geometric or payload-aware controller.
 
-Most likely root cause: the current payload SDF/joint setup is interfering with Gazebo vehicle dynamics or link-frame constraints.
+See the next-stage roadmap for the proposed controller path: [`reports/controller_benchmark_2026-06-08/NEXT_STAGE_CONTROLLER_ROADMAP.md`](reports/controller_benchmark_2026-06-08/NEXT_STAGE_CONTROLLER_ROADMAP.md).
