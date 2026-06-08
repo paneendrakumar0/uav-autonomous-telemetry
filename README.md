@@ -20,7 +20,7 @@ Latest controller benchmark: [`reports/controller_benchmark_2026-06-08/CONTROLLE
 | Physical payload joint validation | Hover solved | Native ball-joint payload reaches `-5 m` NED hover with post-12s mean error `0.061 m` |
 | Slung-payload Figure-8 validation | Complete baseline | Native ball-joint payload completed sustained 8-shaped trajectory with post-25s mean error `0.462 m` |
 | Controller benchmark and next-stage plan | Complete | Baseline comparison and geometric-controller roadmap added |
-| Geometric attitude/thrust controller prototype | Build complete | Separate SE(3)-style attitude controller added for commissioning against the baseline |
+| Geometric attitude/thrust controller prototype | No-payload commissioned | Versioned attitude-topic fix validated; tuned post-20s mean error `0.212 m` |
 
 ## Repository Layout
 
@@ -343,7 +343,14 @@ Artifacts:
 - Controller source: [`ros2_ws/src/uav_control/src/geometric_figure8_attitude.cpp`](ros2_ws/src/uav_control/src/geometric_figure8_attitude.cpp)
 - Launch file: [`ros2_ws/src/uav_control/launch/geometric_figure8_experiment.launch.py`](ros2_ws/src/uav_control/launch/geometric_figure8_experiment.launch.py)
 
-Status: build validated; SITL flight commissioning is the next step before comparing it against the proven baseline.
+Commissioning result:
+
+| Run | Hover Thrust | Post-20s Mean Error | Post-20s RMS Error | Post-20s Max Error | Mean Z NED |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Corrected attitude topic | `0.62` | `0.683 m` | `0.683 m` | `0.760 m` | `-4.361 m` |
+| Tuned attitude topic | `0.70` | `0.212 m` | `0.224 m` | `0.353 m` | `-4.922 m` |
+
+Status: no-payload attitude/thrust commissioning is complete. The next test is the same controller on the native ball-joint slung-payload model.
 
 ## Installation
 
@@ -441,7 +448,7 @@ ros2 launch uav_control geometric_figure8_experiment.launch.py \
   amplitude:=5.0 \
   omega:=0.20 \
   altitude_ned:=-5.0 \
-  hover_thrust:=0.62
+  hover_thrust:=0.70
 ```
 
 ### Terminal 3 Alternative: Hover Validation

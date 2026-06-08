@@ -41,7 +41,7 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "hover_thrust",
-                default_value="0.62",
+                default_value="0.70",
                 description="Normalized hover-thrust estimate used to scale attitude-mode thrust.",
             ),
             Node(

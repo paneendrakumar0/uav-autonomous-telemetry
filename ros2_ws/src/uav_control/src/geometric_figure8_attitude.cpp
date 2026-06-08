@@ -9,6 +9,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstdint>
+#include <string>
 
 using namespace std::chrono_literals;
 
@@ -137,10 +138,12 @@ public:
 		kp_z_ = declare_parameter<double>("kp_z", 2.2);
 		kd_xy_ = declare_parameter<double>("kd_xy", 1.1);
 		kd_z_ = declare_parameter<double>("kd_z", 1.4);
-		hover_thrust_ = declare_parameter<double>("hover_thrust", 0.62);
+		hover_thrust_ = declare_parameter<double>("hover_thrust", 0.70);
 		min_thrust_ = declare_parameter<double>("min_thrust", 0.15);
 		max_thrust_ = declare_parameter<double>("max_thrust", 0.90);
 		takeoff_ramp_s_ = declare_parameter<double>("takeoff_ramp_s", 8.0);
+		attitude_setpoint_topic_ =
+			declare_parameter<std::string>("attitude_setpoint_topic", "/fmu/in/vehicle_attitude_setpoint_v1");
 		arm_after_setpoints_ = declare_parameter<int>("arm_after_setpoints", 50);
 
 		auto qos = rclcpp::QoS(rclcpp::KeepLast(10)).best_effort();
@@ -150,7 +153,7 @@ public:
 		offboard_control_mode_pub_ =
 			create_publisher<px4_msgs::msg::OffboardControlMode>("/fmu/in/offboard_control_mode", qos);
 		attitude_setpoint_pub_ =
-			create_publisher<px4_msgs::msg::VehicleAttitudeSetpoint>("/fmu/in/vehicle_attitude_setpoint", qos);
+			create_publisher<px4_msgs::msg::VehicleAttitudeSetpoint>(attitude_setpoint_topic_, qos);
 		trajectory_reference_pub_ =
 			create_publisher<px4_msgs::msg::TrajectorySetpoint>("/fmu/in/trajectory_setpoint", qos);
 		vehicle_command_pub_ =
@@ -161,8 +164,8 @@ public:
 
 		RCLCPP_INFO(
 			get_logger(),
-			"Geometric Figure-8 attitude prototype started: A=%.2f m omega=%.2f rad/s z=%.2f NED",
-			amplitude_, omega_, altitude_ned_);
+			"Geometric Figure-8 attitude prototype started: A=%.2f m omega=%.2f rad/s z=%.2f NED attitude_topic=%s",
+			amplitude_, omega_, altitude_ned_, attitude_setpoint_topic_.c_str());
 	}
 
 private:
@@ -184,10 +187,11 @@ private:
 	double kp_z_{2.2};
 	double kd_xy_{1.1};
 	double kd_z_{1.4};
-	double hover_thrust_{0.62};
+	double hover_thrust_{0.70};
 	double min_thrust_{0.15};
 	double max_thrust_{0.90};
 	double takeoff_ramp_s_{8.0};
+	std::string attitude_setpoint_topic_{"/fmu/in/vehicle_attitude_setpoint_v1"};
 	int arm_after_setpoints_{50};
 	int setpoint_counter_{0};
 	bool command_sent_{false};

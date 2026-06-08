@@ -87,11 +87,14 @@ Recommended validation sequence:
 - Launch file added.
 - Build validation completed with `colcon build --packages-select uav_control`.
 - No-payload SITL commissioning attempted.
-- The prototype enters/requests Offboard and publishes the Figure-8 reference stream, but the vehicle does not yet climb under attitude/thrust control.
-- PX4 `trajectory_setpoint` was verified fresh during the follow-up run, while PX4 `vehicle_attitude_setpoint` remained stale. The next blocker is therefore the attitude-setpoint ingestion path, not trajectory generation or payload dynamics.
-- The proven PX4 position/velocity controller remains the current research baseline until this prototype is commissioned successfully.
+- The initial prototype published to `/fmu/in/vehicle_attitude_setpoint`, but the active ROS graph exposed `/fmu/in/vehicle_attitude_setpoint_v1`; this caused PX4 attitude setpoints to remain stale.
+- After switching to `/fmu/in/vehicle_attitude_setpoint_v1`, PX4 accepted fresh attitude/thrust setpoints and detected takeoff.
+- Tuned no-payload run with `hover_thrust=0.70` completed a slow Figure-8 commissioning pass with post-20s mean 3D error `0.212 m`, RMS `0.224 m`, and maximum `0.353 m`.
+- The proven PX4 position/velocity controller remains the payload research baseline until this attitude controller is also validated with the slung-payload model.
 
 ## Commissioning Evidence
 
 - Initial no-payload run: `no_payload_commissioning/NO_PAYLOAD_COMMISSIONING_REPORT.md`
 - Mode-before-arm follow-up: `no_payload_commissioning_mode_first/MODE_FIRST_FOLLOWUP_REPORT.md`
+- Corrected versioned-topic run: `no_payload_commissioning_attitude_v1/ATTITUDE_V1_COMMISSIONING_REPORT.md`
+- Tuned versioned-topic run: `no_payload_commissioning_attitude_v1_tuned/TUNED_ATTITUDE_V1_COMMISSIONING_REPORT.md`
