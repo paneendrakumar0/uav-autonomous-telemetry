@@ -138,7 +138,7 @@ public:
 		kp_z_ = declare_parameter<double>("kp_z", 2.2);
 		kd_xy_ = declare_parameter<double>("kd_xy", 1.1);
 		kd_z_ = declare_parameter<double>("kd_z", 1.4);
-		hover_thrust_ = declare_parameter<double>("hover_thrust", 0.70);
+		hover_thrust_ = declare_parameter<double>("hover_thrust", 0.72);
 		min_thrust_ = declare_parameter<double>("min_thrust", 0.15);
 		max_thrust_ = declare_parameter<double>("max_thrust", 0.90);
 		takeoff_ramp_s_ = declare_parameter<double>("takeoff_ramp_s", 8.0);
@@ -187,7 +187,7 @@ private:
 	double kp_z_{2.2};
 	double kd_xy_{1.1};
 	double kd_z_{1.4};
-	double hover_thrust_{0.70};
+	double hover_thrust_{0.72};
 	double min_thrust_{0.15};
 	double max_thrust_{0.90};
 	double takeoff_ramp_s_{8.0};

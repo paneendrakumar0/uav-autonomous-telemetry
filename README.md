@@ -25,6 +25,7 @@ Latest controller benchmark: [`reports/controller_benchmark_2026-06-08/CONTROLLE
 | Matched-rate controller comparison | Complete | At `omega=0.25`, geometric control reduced mean payload tracking error by `20.2%` |
 | Payload swing instrumentation | Figure-8 calibrated | Same-frame Gazebo logger validated; geometric Figure-8 mean cable length `1.001 m`, mean cable angle `31.119 deg` |
 | Calibrated payload swing comparison | Complete | Geometric control reduced mean tracking error by `21.0%` and mean cable angle by `11.7%` vs PX4 position/velocity |
+| Geometric altitude tuning | Complete | Tuned `hover_thrust=0.72` brings mean altitude to `-4.994 m` NED and mean error to `0.327 m` |
 
 ## Repository Layout
 
@@ -468,6 +469,31 @@ Calibrated comparison, steady-state `t >= 25 s`:
 
 Result: with calibrated payload-state measurements, the geometric controller reduces mean tracking error by `21.0%`, mean lateral swing by `10.3%`, and mean cable angle by `11.7%`. The remaining limitation is altitude bias: the geometric controller flies slightly below the `-5 m` target, so the next stage is altitude-channel tuning.
 
+### 16. Geometric Altitude Tuning
+
+The geometric controller altitude bias was addressed by retuning the normalized hover-thrust scale from `0.70` to `0.72`.
+
+Artifacts:
+
+- Report: [`reports/geometric_altitude_tuning_2026-06-12/GEOMETRIC_ALTITUDE_TUNING_REPORT.md`](reports/geometric_altitude_tuning_2026-06-12/GEOMETRIC_ALTITUDE_TUNING_REPORT.md)
+- XY comparison: [`reports/geometric_altitude_tuning_2026-06-12/altitude_tuning_xy_comparison.png`](reports/geometric_altitude_tuning_2026-06-12/altitude_tuning_xy_comparison.png)
+- Error/altitude/angle comparison: [`reports/geometric_altitude_tuning_2026-06-12/altitude_tuning_error_altitude_angle.png`](reports/geometric_altitude_tuning_2026-06-12/altitude_tuning_error_altitude_angle.png)
+- Tuned swing metrics: [`reports/geometric_altitude_tuning_2026-06-12/hover_thrust_072/tuned_geometric_swing_metrics.png`](reports/geometric_altitude_tuning_2026-06-12/hover_thrust_072/tuned_geometric_swing_metrics.png)
+
+Tuned comparison, steady-state `t >= 25 s`:
+
+| Metric | PX4 Position/Velocity | Geometric `0.70` | Geometric `0.72` |
+| --- | ---: | ---: | ---: |
+| Mean 3D tracking error | `0.464 m` | `0.367 m` | `0.327 m` |
+| RMS 3D tracking error | `0.497 m` | `0.375 m` | `0.338 m` |
+| Mean XY tracking error | `0.464 m` | `0.340 m` | `0.327 m` |
+| Mean altitude | `-4.999 m` NED | `-4.867 m` NED | `-4.994 m` NED |
+| Mean cable length | `1.001 m` | `1.001 m` | `1.001 m` |
+| Mean lateral swing | `0.573 m` | `0.514 m` | `0.513 m` |
+| Mean cable angle | `35.222 deg` | `31.119 deg` | `31.061 deg` |
+
+Result: the altitude bias is effectively solved without sacrificing the payload-swing improvement. The tuned geometric controller now reduces mean tracking error by `29.5%` versus the calibrated PX4 position/velocity baseline while keeping mean cable angle `11.8%` lower.
+
 ## Installation
 
 ### 1. PX4 Autopilot
@@ -576,7 +602,7 @@ ros2 launch uav_control geometric_figure8_experiment.launch.py \
   amplitude:=5.0 \
   omega:=0.20 \
   altitude_ned:=-5.0 \
-  hover_thrust:=0.70
+  hover_thrust:=0.72
 ```
 
 ### Terminal 3 Alternative: Hover Validation
