@@ -24,6 +24,7 @@ Latest controller benchmark: [`reports/controller_benchmark_2026-06-08/CONTROLLE
 | Geometric slung-payload Figure-8 | Complete first pass | Payload run succeeded with post-20s mean error `0.315 m` |
 | Matched-rate controller comparison | Complete | At `omega=0.25`, geometric control reduced mean payload tracking error by `20.2%` |
 | Payload swing instrumentation | Figure-8 calibrated | Same-frame Gazebo logger validated; geometric Figure-8 mean cable length `1.001 m`, mean cable angle `31.119 deg` |
+| Calibrated payload swing comparison | Complete | Geometric control reduced mean tracking error by `21.0%` and mean cable angle by `11.7%` vs PX4 position/velocity |
 
 ## Repository Layout
 
@@ -442,6 +443,31 @@ Calibrated matched-rate geometric Figure-8 result:
 
 Status: geometric Figure-8 swing instrumentation is calibrated. The next fair swing comparison is to rerun the PX4 position/velocity baseline with the same corrected logger.
 
+### 15. Calibrated Payload Swing Comparison
+
+The PX4 position/velocity payload Figure-8 baseline was rerun with the corrected same-frame Gazebo link-pair logger, making the swing comparison fair against the geometric controller.
+
+Artifacts:
+
+- Report: [`reports/payload_swing_instrumentation_2026-06-12/CALIBRATED_CONTROLLER_SWING_COMPARISON.md`](reports/payload_swing_instrumentation_2026-06-12/CALIBRATED_CONTROLLER_SWING_COMPARISON.md)
+- Controller XY comparison: [`reports/payload_swing_instrumentation_2026-06-12/calibrated_controller_xy_comparison.png`](reports/payload_swing_instrumentation_2026-06-12/calibrated_controller_xy_comparison.png)
+- Error/swing comparison: [`reports/payload_swing_instrumentation_2026-06-12/calibrated_controller_error_swing_comparison.png`](reports/payload_swing_instrumentation_2026-06-12/calibrated_controller_error_swing_comparison.png)
+- Baseline swing metrics: [`reports/payload_swing_instrumentation_2026-06-12/calibrated_baseline_omega025/calibrated_baseline_swing_metrics.png`](reports/payload_swing_instrumentation_2026-06-12/calibrated_baseline_omega025/calibrated_baseline_swing_metrics.png)
+
+Calibrated comparison, steady-state `t >= 25 s`:
+
+| Metric | PX4 Position/Velocity | Geometric Attitude/Thrust |
+| --- | ---: | ---: |
+| Mean 3D tracking error | `0.464 m` | `0.367 m` |
+| RMS 3D tracking error | `0.497 m` | `0.375 m` |
+| Mean XY tracking error | `0.464 m` | `0.340 m` |
+| Mean altitude | `-4.999 m` NED | `-4.867 m` NED |
+| Mean cable length | `1.001 m` | `1.001 m` |
+| Mean lateral swing | `0.573 m` | `0.514 m` |
+| Mean cable angle | `35.222 deg` | `31.119 deg` |
+
+Result: with calibrated payload-state measurements, the geometric controller reduces mean tracking error by `21.0%`, mean lateral swing by `10.3%`, and mean cable angle by `11.7%`. The remaining limitation is altitude bias: the geometric controller flies slightly below the `-5 m` target, so the next stage is altitude-channel tuning.
+
 ## Installation
 
 ### 1. PX4 Autopilot
@@ -454,18 +480,30 @@ bash ./Tools/setup/ubuntu.sh
 make px4_sitl_default -j2
 ```
 
-### 2. ROS 2 Workspace
+### 2. PX4 ROS 2 Messages
+
+```bash
+mkdir -p ~/px4_msgs_ws/src
+git clone https://github.com/PX4/px4_msgs.git ~/px4_msgs_ws/src/px4_msgs
+cd ~/px4_msgs_ws
+source /opt/ros/humble/setup.zsh
+colcon build --packages-select px4_msgs --symlink-install
+source install/setup.zsh
+```
+
+### 3. ROS 2 Workspace
 
 ```bash
 mkdir -p ~/ros2_ws/src
 cp -r ./ros2_ws/src/uav_control ~/ros2_ws/src/
 cd ~/ros2_ws
 source /opt/ros/humble/setup.zsh
+source ~/px4_msgs_ws/install/setup.zsh
 colcon build --packages-select uav_control
 source install/setup.zsh
 ```
 
-### 3. Micro XRCE-DDS Agent
+### 4. Micro XRCE-DDS Agent
 
 ```bash
 MicroXRCEAgent udp4 -p 8888
