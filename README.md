@@ -14,6 +14,12 @@ Latest controller benchmark: [`reports/STAGE4_SUMMARY.md`](reports/STAGE4_SUMMAR
 - **Steady State Screenshot**: [`reports/media/steady_state.png`](reports/media/steady_state.png)
 - **Landing Screenshot**: [`reports/media/landing.png`](reports/media/landing.png)
 
+### Matched-Rate Comparison ($\omega = 0.25$ rad/s)
+- **XY Tracking**: ![XY Comparison](reports/matched_rate/plots/comparison_xy.png)
+- **Tracking Error**: ![Error Comparison](reports/matched_rate/plots/comparison_error.png)
+- **Cable Angle (Swing)**: ![Swing Comparison](reports/matched_rate/plots/comparison_cable_angle.png)
+
+
 ## Project Status
 
 | Stage | Status | Evidence |
