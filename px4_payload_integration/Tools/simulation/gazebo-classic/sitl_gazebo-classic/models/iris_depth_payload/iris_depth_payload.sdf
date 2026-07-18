@@ -604,6 +604,13 @@
           </script>
         </material>
       </visual>
+      <collision name="slung_payload_collision">
+        <geometry>
+          <sphere>
+            <radius>0.10</radius>
+          </sphere>
+        </geometry>
+      </collision>
       <visual name="payload_cable_visual">
         <pose>0 0 0.5 0 0 0</pose>
         <geometry>
@@ -643,5 +650,6 @@
       <linkName>/imu_link</linkName>
       <imuTopic>/imu</imuTopic>
     </plugin>
+    <plugin name="payload_collision_toggle_plugin" filename="libpayload_collision_toggle_plugin.so"/>
   </model>
 </sdf>

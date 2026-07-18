@@ -19,3 +19,4 @@ __pycache__/
 
 # Large local simulator binaries should not be added here
 QGroundControl*.AppImage
+reports/repeatability_trials_2026-06-12/logs/*.log
