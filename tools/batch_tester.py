@@ -49,8 +49,8 @@ def run_single_trial(trial_idx, out_dir):
     
     success = False
     try:
-        shutil.copy(repo_root / "figure8_tracking_metrics.csv", trial_out / "figure8_tracking_metrics.csv")
-        shutil.copy(repo_root / "payload_swing_metrics.csv", trial_out / "payload_swing_metrics.csv")
+        shutil.copy(repo_root / "geometric_figure8_tracking_metrics.csv", trial_out / "figure8_tracking_metrics.csv")
+        shutil.copy(repo_root / "geometric_payload_swing_metrics.csv", trial_out / "payload_swing_metrics.csv")
         
         # Verify success by checking if the flight completed enough points (basic check)
         df = pd.read_csv(trial_out / "figure8_tracking_metrics.csv")
@@ -58,8 +58,8 @@ def run_single_trial(trial_idx, out_dir):
             success = True
             
         # Clean up root files for next trial
-        os.remove(repo_root / "figure8_tracking_metrics.csv")
-        os.remove(repo_root / "payload_swing_metrics.csv")
+        os.remove(repo_root / "geometric_figure8_tracking_metrics.csv")
+        os.remove(repo_root / "geometric_payload_swing_metrics.csv")
     except FileNotFoundError:
         pass
     
