@@ -11,6 +11,7 @@ def generate_launch_description():
     omega = LaunchConfiguration("omega")
     altitude_ned = LaunchConfiguration("altitude_ned")
     hover_thrust = LaunchConfiguration("hover_thrust")
+    fig8_ramp_s = LaunchConfiguration("fig8_ramp_s")
 
     return LaunchDescription(
         [
@@ -44,6 +45,11 @@ def generate_launch_description():
                 default_value="0.72",
                 description="Normalized hover-thrust estimate used to scale attitude-mode thrust.",
             ),
+            DeclareLaunchArgument(
+                "fig8_ramp_s",
+                default_value="5.0",
+                description="Ramp time in seconds for the figure-8 XY trajectory.",
+            ),
             Node(
                 package="uav_control",
                 executable="figure8_metrics_logger",
@@ -74,6 +80,7 @@ def generate_launch_description():
                         "kd_xy": 1.1,
                         "kd_z": 1.4,
                         "takeoff_ramp_s": 8.0,
+                        "fig8_ramp_s": fig8_ramp_s,
                         "arm_after_setpoints": 50,
                     }
                 ],
