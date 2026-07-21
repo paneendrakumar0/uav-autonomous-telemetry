@@ -29,7 +29,7 @@ def cleanup_sim_processes():
     )
 
 
-def validate_tracking(csv_path, min_samples, max_abs_position_m):
+def validate_tracking(csv_path, min_samples, max_abs_position_m, target_altitude_ned, max_mean_altitude_error_m):
     if not csv_path.exists():
         return False, "missing tracking CSV", {}
 
@@ -49,20 +49,27 @@ def validate_tracking(csv_path, min_samples, max_abs_position_m):
     if steady.empty:
         steady = df
 
-    return (
-        True,
-        "valid tracking telemetry",
-        {
-            "samples": int(len(df)),
-            "duration_s": float(df["t_s"].max()),
-            "mean_3d_error_m": float(steady["error_norm"].mean()),
-            "rms_3d_error_m": float((steady["error_norm"] ** 2).mean() ** 0.5),
-            "max_3d_error_m": float(steady["error_norm"].max()),
-            "mean_xy_error_m": float((steady["error_x"] ** 2 + steady["error_y"] ** 2).pow(0.5).mean()),
-            "mean_z_ned_m": float(steady["actual_z"].mean()),
-            "max_abs_position_m": max_abs_position,
-        },
-    )
+    metrics = {
+        "samples": int(len(df)),
+        "duration_s": float(df["t_s"].max()),
+        "mean_3d_error_m": float(steady["error_norm"].mean()),
+        "rms_3d_error_m": float((steady["error_norm"] ** 2).mean() ** 0.5),
+        "max_3d_error_m": float(steady["error_norm"].max()),
+        "mean_xy_error_m": float((steady["error_x"] ** 2 + steady["error_y"] ** 2).pow(0.5).mean()),
+        "mean_z_ned_m": float(steady["actual_z"].mean()),
+        "max_abs_position_m": max_abs_position,
+    }
+
+    altitude_error = abs(metrics["mean_z_ned_m"] - target_altitude_ned)
+    metrics["mean_altitude_error_m"] = altitude_error
+    if altitude_error > max_mean_altitude_error_m:
+        return (
+            False,
+            f"mean altitude error too large ({altitude_error:.2f} m > {max_mean_altitude_error_m:.2f} m)",
+            metrics,
+        )
+
+    return (True, "valid tracking telemetry", metrics)
 
 
 def summarize_swing(csv_path):
@@ -152,6 +159,8 @@ def main():
     parser.add_argument("--hover-thrust", type=float, default=0.72)
     parser.add_argument("--min-samples", type=int, default=500)
     parser.add_argument("--max-abs-position-m", type=float, default=100.0)
+    parser.add_argument("--target-altitude-ned", type=float, default=-5.0)
+    parser.add_argument("--max-mean-altitude-error-m", type=float, default=1.0)
     parser.add_argument("--repo-root", default="~/uav-autonomous-telemetry")
     parser.add_argument("--px4-dir", default="~/PX4-Autopilot")
     parser.add_argument("--out-dir", default="")
@@ -245,6 +254,8 @@ def main():
         tracking_path,
         min_samples=args.min_samples,
         max_abs_position_m=args.max_abs_position_m,
+        target_altitude_ned=args.target_altitude_ned,
+        max_mean_altitude_error_m=args.max_mean_altitude_error_m,
     )
     summary.update(summarize_swing(swing_path))
     summary.update(

@@ -105,11 +105,13 @@ def markdown_table(df, columns):
 
 def write_report(out_dir, trial_df, summary_df, improvement_df):
     total_trials = len(trial_df)
+    profiles = sorted(trial_df["profile"].unique())
+    trials_per_profile = len(trial_df[trial_df["profile"] == profiles[0]]) if profiles else 0
     report = f"""# Controlled Repeatability Validation - 2026-07-21
 
 ## Purpose
 
-This phase extends the clean June 12 restart from one controlled run per controller to a small repeatability set. It intentionally uses only three trials per controller before any larger batch testing.
+This phase extends the clean June 12 restart from one controlled run per controller to a controlled repeatability set with the same launch, telemetry, and validation gates for every trial.
 
 ## Setup
 
@@ -118,7 +120,7 @@ This phase extends the clean June 12 restart from one controlled run per control
 - Trajectory: Figure-8
 - Angular rate: `0.25 rad/s`
 - Geometric hover thrust: `0.72`
-- Trials: `3` PX4 baseline + `3` tuned geometric
+- Trials: `{trials_per_profile}` PX4 baseline + `{trials_per_profile}` tuned geometric
 - Validation gate: PX4 local position must remain within `100 m`
 - Payload measurement: calibrated Gazebo same-frame link pair
 
@@ -140,7 +142,7 @@ All `{total_trials}` trials completed with valid tracking and payload swing tele
 
 ## Next Phase
 
-Scale the repeatability test to a larger sample only after this six-run dataset is reviewed. A reasonable next step is `5 + 5` or `10 + 10` trials before attempting another 48-run batch.
+Scale the repeatability test further only after this dataset is reviewed. A reasonable next step is `10 + 10` trials before attempting another 48-run batch.
 """
     (out_dir / "REPEATABILITY_SUMMARY.md").write_text(report)
 
@@ -181,6 +183,10 @@ def main():
                     str(run_dir),
                     "--min-samples",
                     "500",
+                    "--target-altitude-ned",
+                    "-5.0",
+                    "--max-mean-altitude-error-m",
+                    "1.0",
                 ],
                 cwd=repo_root,
             )
@@ -188,6 +194,11 @@ def main():
             remove_logs(run_dir)
 
             summary = read_summary(run_dir)
+            if not summary.get("tracking_valid", False) or not summary.get("swing_valid", False):
+                raise SystemExit(
+                    f"{label} failed validation: "
+                    f"{summary.get('tracking_reason')} / {summary.get('swing_reason')}"
+                )
             rows.append({"trial": trial, **summary})
 
     trial_df = pd.DataFrame(rows)
