@@ -10,6 +10,7 @@ Latest controller benchmark: [`reports/STAGE4_SUMMARY.md`](reports/STAGE4_SUMMAR
 
 ### Media Artifacts
 - **Full Flight Video**: [`reports/media/flight_sequence.mp4`](reports/media/flight_sequence.mp4)
+- **Takeoff Screenshot**: [`reports/media/takeoff.png`](reports/media/takeoff.png)
 - **Steady State Screenshot**: [`reports/media/steady_state.png`](reports/media/steady_state.png)
 - **Landing Screenshot**: [`reports/media/landing.png`](reports/media/landing.png)
 
