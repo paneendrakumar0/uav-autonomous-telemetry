@@ -8,12 +8,6 @@ Final PDF report: [`reports/final_research_report_2026-06-07/uav_slung_payload_s
 
 Latest controller benchmark: [`reports/STAGE4_SUMMARY.md`](reports/STAGE4_SUMMARY.md)
 
-### Media Artifacts
-- **Full Flight Video**: [`reports/media/flight_sequence.mp4`](reports/media/flight_sequence.mp4)
-- **Takeoff Screenshot**: [`reports/media/takeoff.png`](reports/media/takeoff.png)
-- **Steady State Screenshot**: [`reports/media/steady_state.png`](reports/media/steady_state.png)
-- **Landing Screenshot**: [`reports/media/landing.png`](reports/media/landing.png)
-
 ## Project Status
 
 | Stage | Status | Evidence |
