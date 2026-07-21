@@ -124,24 +124,6 @@ def main() -> None:
             25.0,
             "Figure-8, physical payload attached",
         ),
-        TrackingCase(
-            "Stage 4: Geometric omega=0.25",
-            root / "reports/stage4_omega_025/figure8_tracking_metrics.csv",
-            25.0,
-            "Figure-8, geometric + smooth ramp",
-        ),
-        TrackingCase(
-            "Stage 4: Geometric omega=0.20",
-            root / "reports/stage4_omega_02/figure8_tracking_metrics.csv",
-            25.0,
-            "Figure-8, geometric + smooth ramp",
-        ),
-        TrackingCase(
-            "Stage 4: Geometric omega=0.15",
-            root / "reports/stage4_omega_015/figure8_tracking_metrics.csv",
-            25.0,
-            "Figure-8, geometric + smooth ramp",
-        ),
     ]
     swing_cases = [
         SwingCase(
@@ -152,21 +134,6 @@ def main() -> None:
         SwingCase(
             "Native ball-joint payload Figure-8",
             root / "reports/payload_figure8_native_ball_2026-06-07/payload_swing_metrics.csv",
-            25.0,
-        ),
-        SwingCase(
-            "Stage 4: Geometric omega=0.25",
-            root / "reports/stage4_omega_025/payload_swing_metrics.csv",
-            25.0,
-        ),
-        SwingCase(
-            "Stage 4: Geometric omega=0.20",
-            root / "reports/stage4_omega_02/payload_swing_metrics.csv",
-            25.0,
-        ),
-        SwingCase(
-            "Stage 4: Geometric omega=0.15",
-            root / "reports/stage4_omega_015/payload_swing_metrics.csv",
             25.0,
         ),
     ]

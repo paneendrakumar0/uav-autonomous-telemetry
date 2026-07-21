@@ -142,7 +142,6 @@ public:
 		min_thrust_ = declare_parameter<double>("min_thrust", 0.15);
 		max_thrust_ = declare_parameter<double>("max_thrust", 0.90);
 		takeoff_ramp_s_ = declare_parameter<double>("takeoff_ramp_s", 8.0);
-		fig8_ramp_s_ = declare_parameter<double>("fig8_ramp_s", 5.0);
 		attitude_setpoint_topic_ =
 			declare_parameter<std::string>("attitude_setpoint_topic", "/fmu/in/vehicle_attitude_setpoint_v1");
 		arm_after_setpoints_ = declare_parameter<int>("arm_after_setpoints", 50);
@@ -192,7 +191,6 @@ private:
 	double min_thrust_{0.15};
 	double max_thrust_{0.90};
 	double takeoff_ramp_s_{8.0};
-	double fig8_ramp_s_{5.0};
 	std::string attitude_setpoint_topic_{"/fmu/in/vehicle_attitude_setpoint_v1"};
 	int arm_after_setpoints_{50};
 	int setpoint_counter_{0};
@@ -262,37 +260,19 @@ private:
 		const double sin_2phase = std::sin(2.0 * phase);
 		const double cos_2phase = std::cos(2.0 * phase);
 
-		double env = 1.0;
-		double env_dot = 0.0;
-		double env_ddot = 0.0;
-
-		if (tau < fig8_ramp_s_) {
-			const double s = std::max(0.0, std::min(1.0, tau / fig8_ramp_s_));
-			env = s * s * (3.0 - 2.0 * s);
-			env_dot = 6.0 * s * (1.0 - s) / fig8_ramp_s_;
-			env_ddot = 6.0 * (1.0 - 2.0 * s) / (fig8_ramp_s_ * fig8_ramp_s_);
-		}
-
-		const double x0 = amplitude_ * sin_phase;
-		const double y0 = 0.5 * amplitude_ * sin_2phase;
-		const double vx0 = amplitude_ * omega_ * cos_phase;
-		const double vy0 = amplitude_ * omega_ * cos_2phase;
-		const double ax0 = -amplitude_ * omega_ * omega_ * sin_phase;
-		const double ay0 = -2.0 * amplitude_ * omega_ * omega_ * sin_2phase;
-
 		xd = {
-			env * x0,
-			env * y0,
+			amplitude_ * sin_phase,
+			0.5 * amplitude_ * sin_2phase,
 			altitude_ned_,
 		};
 		vd = {
-			env_dot * x0 + env * vx0,
-			env_dot * y0 + env * vy0,
+			amplitude_ * omega_ * cos_phase,
+			amplitude_ * omega_ * cos_2phase,
 			0.0,
 		};
 		ad = {
-			env_ddot * x0 + 2.0 * env_dot * vx0 + env * ax0,
-			env_ddot * y0 + 2.0 * env_dot * vy0 + env * ay0,
+			-amplitude_ * omega_ * omega_ * sin_phase,
+			-2.0 * amplitude_ * omega_ * omega_ * sin_2phase,
 			0.0,
 		};
 	}

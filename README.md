@@ -6,7 +6,7 @@ This repository captures the current project state, including runnable ROS 2 nod
 
 Final PDF report: [`reports/final_research_report_2026-06-07/uav_slung_payload_sitl_research_report_2026-06-07.pdf`](reports/final_research_report_2026-06-07/uav_slung_payload_sitl_research_report_2026-06-07.pdf)
 
-Latest controller benchmark: [`reports/STAGE4_SUMMARY.md`](reports/STAGE4_SUMMARY.md)
+Latest controller benchmark: [`reports/controller_benchmark_2026-06-08/CONTROLLER_BENCHMARK_SUMMARY.md`](reports/controller_benchmark_2026-06-08/CONTROLLER_BENCHMARK_SUMMARY.md)
 
 ## Project Status
 
@@ -26,7 +26,6 @@ Latest controller benchmark: [`reports/STAGE4_SUMMARY.md`](reports/STAGE4_SUMMAR
 | Payload swing instrumentation | Figure-8 calibrated | Same-frame Gazebo logger validated; geometric Figure-8 mean cable length `1.001 m`, mean cable angle `31.119 deg` |
 | Calibrated payload swing comparison | Complete | Geometric control reduced mean tracking error by `21.0%` and mean cable angle by `11.7%` vs PX4 position/velocity |
 | Geometric altitude tuning | Complete | Tuned `hover_thrust=0.72` brings mean altitude to `-4.994 m` NED and mean error to `0.327 m` |
-| Payload-Aware Trajectory Tuning (Stage 4) | Complete | Smooth 5s start ramp reduces 0.25 rad/s tracking error to `0.334 m`; slowing to 0.15 rad/s cuts swing to `20.1 deg`. |
 
 ## Repository Layout
 
@@ -494,28 +493,6 @@ Tuned comparison, steady-state `t >= 25 s`:
 | Mean cable angle | `35.222 deg` | `31.119 deg` | `31.061 deg` |
 
 Result: the altitude bias is effectively solved without sacrificing the payload-swing improvement. The tuned geometric controller now reduces mean tracking error by `29.5%` versus the calibrated PX4 position/velocity baseline while keeping mean cable angle `11.8%` lower.
-
-### 17. Payload-Aware Trajectory Tuning (Stage 4)
-
-A 5-second smooth acceleration ramp was added to the geometric controller to prevent the drone from abruptly jerking sideways at the start of the Figure-8 circuit. The trajectory angular rate (`omega`) was also swept from `0.25` down to `0.15` rad/s to measure the trade-off between path tracking aggression and payload swing excitation.
-
-Artifacts:
-
-- Stage 4 benchmark summary: [`reports/STAGE4_SUMMARY.md`](reports/STAGE4_SUMMARY.md)
-- Tracking error plot (`omega=0.25`): [`reports/stage4_omega_025/figure8_tracking_error.png`](reports/stage4_omega_025/figure8_tracking_error.png)
-- Tracking error plot (`omega=0.20`): [`reports/stage4_omega_02/figure8_tracking_error.png`](reports/stage4_omega_02/figure8_tracking_error.png)
-- Tracking error plot (`omega=0.15`): [`reports/stage4_omega_015/figure8_tracking_error.png`](reports/stage4_omega_015/figure8_tracking_error.png)
-
-Stage 4 comparison, steady-state `t >= 25 s`:
-
-| Run | Mean 3D Error | Max 3D Error | Mean Cable Angle |
-| --- | ---: | ---: | ---: |
-| Old Baseline (`omega=0.25`, unramped) | `0.367 m` | `0.624 m` | `31.1 deg` |
-| Stage 4 (`omega=0.25`) | `0.334 m` | `0.609 m` | `31.2 deg` |
-| Stage 4 (`omega=0.20`) | `0.297 m` | `0.480 m` | `25.7 deg` |
-| Stage 4 (`omega=0.15`) | `0.230 m` | `0.399 m` | `20.1 deg` |
-
-Result: The smooth start successfully reduced the baseline tracking error from `0.367 m` to `0.334 m`. Furthermore, reducing the trajectory speed creates an almost linear, drastic reduction in payload swing (down to `20.1 deg` at `0.15 rad/s`) while keeping tracking error minimal (`0.230 m`).
 
 ## Installation
 
