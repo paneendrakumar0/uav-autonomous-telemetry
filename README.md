@@ -36,12 +36,6 @@ Latest controller benchmark: [`reports/STAGE4_SUMMARY.md`](reports/STAGE4_SUMMAR
 | Matched-rate controller comparison | Complete | At `omega=0.25`, geometric control reduced mean payload tracking error by `20.2%` |
 | Payload swing instrumentation | Figure-8 calibrated | Same-frame Gazebo logger validated; geometric Figure-8 mean cable length `1.001 m`, mean cable angle `31.119 deg` |
 | Calibrated payload swing comparison | Complete | Geometric control reduced mean tracking error by `21.0%` and mean cable angle by `11.7%` vs PX4 position/velocity |
-
-### Recent Task Progression
-| 1. Simulation Media Capture | ✅ COMPLETED | Added scripts for automated screenshot and video capture. |
-| 2. Matched-Rate Trials | ✅ COMPLETED | Generated comparison plots ($\omega=0.25$) for Geometric vs PX4 Baseline. |
-| 3. Payload Collision Resolution | ✅ COMPLETED | Created `PayloadCollisionTogglePlugin` to dynamically toggle collision on/off at `Z=1.0` during flight. |
-| 4. High-Volume Batch Testing | 🏃 IN PROGRESS | Created `tools/batch_tester.py` to run 50 trials. Ready to execute overnight. |
 | Geometric altitude tuning | Complete | Tuned `hover_thrust=0.72` brings mean altitude to `-4.994 m` NED and mean error to `0.327 m` |
 | Payload-Aware Trajectory Tuning (Stage 4) | Complete | Smooth 5s start ramp reduces 0.25 rad/s tracking error to `0.334 m`; slowing to 0.15 rad/s cuts swing to `20.1 deg`. |
 
