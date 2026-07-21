@@ -11,6 +11,7 @@ __pycache__/
 *.ulg
 *.bag
 *.db3
+reports/single_validation_*/logs/
 
 # Local editor files
 .vscode/
