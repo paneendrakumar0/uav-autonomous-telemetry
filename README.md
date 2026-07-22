@@ -8,8 +8,6 @@ Final PDF report: [`reports/final_research_report_2026-06-07/uav_slung_payload_s
 
 Latest controller benchmark: [`reports/controller_benchmark_2026-06-08/CONTROLLER_BENCHMARK_SUMMARY.md`](reports/controller_benchmark_2026-06-08/CONTROLLER_BENCHMARK_SUMMARY.md)
 
-Current research-product roadmap: [`RESEARCH_PRODUCT_ROADMAP.md`](RESEARCH_PRODUCT_ROADMAP.md)
-
 Latest controlled validation:
 
 - `5+5` repeatability summary: [`reports/repeatability_validation_5x5_2026-07-21/REPEATABILITY_SUMMARY.md`](reports/repeatability_validation_5x5_2026-07-21/REPEATABILITY_SUMMARY.md)
@@ -26,7 +24,7 @@ Latest controlled validation:
 | Slung-payload native model integration | Complete hover baseline | Native Iris-derived `iris_depth_payload` with internal `base_link -> slung_payload` ball joint hovers |
 | Physical payload joint validation | Hover solved | Native ball-joint payload reaches `-5 m` NED hover with post-12s mean error `0.061 m` |
 | Slung-payload Figure-8 validation | Complete baseline | Native ball-joint payload completed sustained 8-shaped trajectory with post-25s mean error `0.462 m` |
-| Controller benchmark and next-stage plan | Complete | Baseline comparison and geometric-controller roadmap added |
+| Controller benchmark | Complete | Baseline and geometric-controller comparison added |
 | Geometric attitude/thrust controller prototype | No-payload commissioned | Versioned attitude-topic fix validated; tuned post-20s mean error `0.212 m` |
 | Geometric slung-payload Figure-8 | Complete first pass | Payload run succeeded with post-20s mean error `0.315 m` |
 | Matched-rate controller comparison | Complete | At `omega=0.25`, geometric control reduced mean payload tracking error by `20.2%` |
@@ -337,7 +335,6 @@ The completed runs were consolidated into a single benchmark view before moving 
 Artifacts:
 
 - Benchmark summary: [`reports/controller_benchmark_2026-06-08/CONTROLLER_BENCHMARK_SUMMARY.md`](reports/controller_benchmark_2026-06-08/CONTROLLER_BENCHMARK_SUMMARY.md)
-- Next-stage roadmap: [`reports/controller_benchmark_2026-06-08/NEXT_STAGE_CONTROLLER_ROADMAP.md`](reports/controller_benchmark_2026-06-08/NEXT_STAGE_CONTROLLER_ROADMAP.md)
 - Benchmark generator: [`tools/summarize_benchmarks.py`](tools/summarize_benchmarks.py)
 
 Key comparison:
@@ -641,5 +638,3 @@ The current payload model flies and completes the requested Figure-8 circuit, bu
 - Older payload swing measurements are diagnostic because they mixed Gazebo payload pose with PX4 local position. The logger has now been upgraded for same-frame Gazebo link-pair measurements, but the matched-rate run still needs to be repeated with the upgraded logger.
 - Payload collision is disabled in the current flight baseline to avoid Gazebo Classic ground-contact locking at spawn.
 - The present evidence validates trajectory tracking with a slung payload; the next research step is to compare this baseline against a geometric or payload-aware controller.
-
-See the next-stage roadmap for the proposed controller path: [`reports/controller_benchmark_2026-06-08/NEXT_STAGE_CONTROLLER_ROADMAP.md`](reports/controller_benchmark_2026-06-08/NEXT_STAGE_CONTROLLER_ROADMAP.md).
