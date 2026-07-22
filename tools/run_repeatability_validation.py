@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+from datetime import date
 import json
 import shutil
 import subprocess
@@ -41,6 +42,13 @@ def remove_logs(run_dir):
     logs_dir = run_dir / "logs"
     if logs_dir.exists():
         shutil.rmtree(logs_dir)
+
+
+def remove_raw_telemetry(run_dir):
+    for csv_name in ["tracking_metrics.csv", "payload_swing_metrics.csv"]:
+        csv_path = run_dir / csv_name
+        if csv_path.exists():
+            csv_path.unlink()
 
 
 def profile_label(profile, trial):
@@ -103,11 +111,11 @@ def markdown_table(df, columns):
     return "\n".join(lines)
 
 
-def write_report(out_dir, trial_df, summary_df, improvement_df):
+def write_report(out_dir, trial_df, summary_df, improvement_df, args):
     total_trials = len(trial_df)
     profiles = sorted(trial_df["profile"].unique())
     trials_per_profile = len(trial_df[trial_df["profile"] == profiles[0]]) if profiles else 0
-    report = f"""# Controlled Repeatability Validation - 2026-07-21
+    report = f"""# Controlled Repeatability Validation - {date.today().isoformat()}
 
 ## Purpose
 
@@ -118,11 +126,13 @@ This phase extends the clean June 12 restart from one controlled run per control
 - Vehicle: `iris_depth_payload`
 - Payload: native ball-joint slung payload
 - Trajectory: Figure-8
-- Angular rate: `0.25 rad/s`
-- Geometric hover thrust: `0.72`
+- Angular rate: `{args.omega} rad/s`
+- Geometric hover thrust: `{args.hover_thrust}`
 - Trials: `{trials_per_profile}` PX4 baseline + `{trials_per_profile}` tuned geometric
 - Validation gate: PX4 local position must remain within `100 m`
+- Altitude gate: steady mean altitude must remain within `1.0 m` of `-5.0 m` NED
 - Payload measurement: calibrated Gazebo same-frame link pair
+- Raw per-trial telemetry CSV retention: `{args.keep_raw_telemetry}`
 
 ## Trial Results
 
@@ -142,7 +152,7 @@ All `{total_trials}` trials completed with valid tracking and payload swing tele
 
 ## Next Phase
 
-Scale the repeatability test further only after this dataset is reviewed. A reasonable next step is `10 + 10` trials before attempting another 48-run batch.
+Use this dataset to decide whether the controller comparison is stable enough to proceed to speed sweeps and payload-parameter sweeps.
 """
     (out_dir / "REPEATABILITY_SUMMARY.md").write_text(report)
 
@@ -155,6 +165,11 @@ def main():
     parser.add_argument("--omega", type=float, default=0.25)
     parser.add_argument("--hover-thrust", type=float, default=0.72)
     parser.add_argument("--out-dir", default="reports/repeatability_validation_2026-07-21")
+    parser.add_argument(
+        "--keep-raw-telemetry",
+        action="store_true",
+        help="Keep large per-trial tracking and payload swing CSV files after plots and summaries are generated.",
+    )
     args = parser.parse_args()
 
     repo_root = Path.cwd()
@@ -199,6 +214,8 @@ def main():
                     f"{label} failed validation: "
                     f"{summary.get('tracking_reason')} / {summary.get('swing_reason')}"
                 )
+            if not args.keep_raw_telemetry:
+                remove_raw_telemetry(run_dir)
             rows.append({"trial": trial, **summary})
 
     trial_df = pd.DataFrame(rows)
@@ -215,7 +232,7 @@ def main():
     improvement_df = pd.DataFrame(improvement_rows(summary_df))
     improvement_df.to_csv(out_dir / "repeatability_controller_improvement.csv", index=False)
 
-    write_report(out_dir, trial_df, summary_df, improvement_df)
+    write_report(out_dir, trial_df, summary_df, improvement_df, args)
     print(f"Repeatability artifacts written to {out_dir}")
 
 
