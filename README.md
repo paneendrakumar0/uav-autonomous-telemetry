@@ -10,6 +10,7 @@ Latest controller benchmark: [`reports/controller_benchmark_2026-06-08/CONTROLLE
 
 Latest controlled validation:
 
+- Speed sweep summary: [`reports/speed_sweep_validation_2026-07-22/SPEED_SWEEP_SUMMARY.md`](reports/speed_sweep_validation_2026-07-22/SPEED_SWEEP_SUMMARY.md)
 - `10+10` repeatability summary: [`reports/repeatability_validation_10x10_2026-07-22/REPEATABILITY_SUMMARY.md`](reports/repeatability_validation_10x10_2026-07-22/REPEATABILITY_SUMMARY.md)
 - `5+5` repeatability summary: [`reports/repeatability_validation_5x5_2026-07-21/REPEATABILITY_SUMMARY.md`](reports/repeatability_validation_5x5_2026-07-21/REPEATABILITY_SUMMARY.md)
 - Baseline vs geometric comparison: [`reports/single_validation_2026-07-21_controller_comparison/CONTROLLED_BASELINE_VS_GEOMETRIC.md`](reports/single_validation_2026-07-21_controller_comparison/CONTROLLED_BASELINE_VS_GEOMETRIC.md)
@@ -33,6 +34,7 @@ Latest controlled validation:
 | Calibrated payload swing comparison | Complete | Geometric control reduced mean tracking error by `21.0%` and mean cable angle by `11.7%` vs PX4 position/velocity |
 | Geometric altitude tuning | Complete | Tuned `hover_thrust=0.72` brings mean altitude to `-4.994 m` NED and mean error to `0.327 m` |
 | Controlled `10+10` repeatability | Complete | Geometric control reduced mean 3D error by `23.7%`, RMS error by `24.4%`, mean swing by `8.9%`, and mean cable angle by `10.1%` |
+| Controlled speed sweep | Complete | Geometric control is speed-dependent: weaker tracking at `0.15-0.20 rad/s`, stronger tracking and lower swing at `0.25-0.30 rad/s` |
 
 ## Repository Layout
 
