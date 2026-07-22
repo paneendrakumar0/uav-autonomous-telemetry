@@ -8,6 +8,13 @@ Final PDF report: [`reports/final_research_report_2026-06-07/uav_slung_payload_s
 
 Latest controller benchmark: [`reports/controller_benchmark_2026-06-08/CONTROLLER_BENCHMARK_SUMMARY.md`](reports/controller_benchmark_2026-06-08/CONTROLLER_BENCHMARK_SUMMARY.md)
 
+Current research-product roadmap: [`RESEARCH_PRODUCT_ROADMAP.md`](RESEARCH_PRODUCT_ROADMAP.md)
+
+Latest controlled validation:
+
+- `5+5` repeatability summary: [`reports/repeatability_validation_5x5_2026-07-21/REPEATABILITY_SUMMARY.md`](reports/repeatability_validation_5x5_2026-07-21/REPEATABILITY_SUMMARY.md)
+- Baseline vs geometric comparison: [`reports/single_validation_2026-07-21_controller_comparison/CONTROLLED_BASELINE_VS_GEOMETRIC.md`](reports/single_validation_2026-07-21_controller_comparison/CONTROLLED_BASELINE_VS_GEOMETRIC.md)
+
 ## Project Status
 
 | Stage | Status | Evidence |
