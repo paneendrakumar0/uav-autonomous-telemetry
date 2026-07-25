@@ -164,6 +164,7 @@ def main():
     parser.add_argument("--repo-root", default="~/uav-autonomous-telemetry")
     parser.add_argument("--px4-dir", default="~/PX4-Autopilot")
     parser.add_argument("--out-dir", default="")
+    parser.add_argument("--gui", action="store_true", help="Open the Gazebo Classic client window during the run.")
     args = parser.parse_args()
 
     repo_root = Path(args.repo_root).expanduser()
@@ -201,8 +202,9 @@ def main():
         time.sleep(2)
 
         print("Starting PX4 SITL...")
+        headless_value = "0" if args.gui else "1"
         sitl_proc = subprocess.Popen(
-            ["make", "px4_sitl", "gazebo-classic_iris_depth_payload", "HEADLESS=1"],
+            ["make", "px4_sitl", "gazebo-classic_iris_depth_payload", f"HEADLESS={headless_value}"],
             cwd=px4_dir,
             stdout=px4_log,
             stderr=subprocess.STDOUT,

@@ -1,0 +1,32 @@
+[
+  {
+    "label": "nominal_m050_l100",
+    "mass_kg": 0.05,
+    "cable_length_m": 1.0,
+    "reason": "validated nominal payload"
+  },
+  {
+    "label": "mass_m100_l100",
+    "mass_kg": 0.1,
+    "cable_length_m": 1.0,
+    "reason": "double payload mass"
+  },
+  {
+    "label": "mass_m200_l100",
+    "mass_kg": 0.2,
+    "cable_length_m": 1.0,
+    "reason": "quadruple payload mass"
+  },
+  {
+    "label": "cable_m050_l050",
+    "mass_kg": 0.05,
+    "cable_length_m": 0.5,
+    "reason": "short cable"
+  },
+  {
+    "label": "cable_m050_l150",
+    "mass_kg": 0.05,
+    "cable_length_m": 1.5,
+    "reason": "long cable"
+  }
+]
