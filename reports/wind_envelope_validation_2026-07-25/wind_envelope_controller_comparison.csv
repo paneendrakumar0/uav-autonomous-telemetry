@@ -1,0 +1,13 @@
+case,disturbance_type,wind_speed_m_s,metric,baseline,geometric,both_tracking_valid,improvement_percent
+crosswind_y5,crosswind_y,5.0,mean_3d_error_m,0.44670057463355045,1.2689849150141643,True,-184.07953494467128
+crosswind_y5,crosswind_y,5.0,rms_3d_error_m,0.478232853193189,1.3013099246251203,True,-172.10801515123796
+crosswind_y5,crosswind_y,5.0,mean_lateral_swing_m,0.5661537626636313,0.5138777825170289,True,9.233530463642103
+crosswind_y5,crosswind_y,5.0,mean_cable_angle_deg,34.70450547239613,31.078767492296468,True,10.447456117718096
+gust_y10,gust_y,10.0,mean_3d_error_m,0.5426952305002033,0.45544584906427993,True,16.07704960950282
+gust_y10,gust_y,10.0,rms_3d_error_m,0.6265869458322769,0.6021618947611944,True,3.8981104272192315
+gust_y10,gust_y,10.0,mean_lateral_swing_m,0.5645704308943089,0.5274991339786871,True,6.566283830504366
+gust_y10,gust_y,10.0,mean_cable_angle_deg,34.585264629512196,32.0457667088587,True,7.3427164656895485
+updraft_z5,updraft_z,5.0,mean_3d_error_m,6.369802277508091,0.8451502794177114,False,
+updraft_z5,updraft_z,5.0,rms_3d_error_m,6.4119808408862315,0.851413466017658,False,
+updraft_z5,updraft_z,5.0,mean_lateral_swing_m,3.211617349006891e-05,0.5214276285459555,False,
+updraft_z5,updraft_z,5.0,mean_cable_angle_deg,0.0018396578029995945,31.602780065407686,False,

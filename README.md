@@ -10,6 +10,7 @@ Latest controller benchmark: [`reports/controller_benchmark_2026-06-08/CONTROLLE
 
 Latest controlled validation:
 
+- Wind disturbance envelope screening: [`reports/wind_envelope_validation_2026-07-25/WIND_DISTURBANCE_ENVELOPE_SUMMARY.md`](reports/wind_envelope_validation_2026-07-25/WIND_DISTURBANCE_ENVELOPE_SUMMARY.md)
 - Vertical updraft validation: [`reports/wind_disturbance_updraft_z5_2026-07-25/UPDRAFT_Z5_SUMMARY.md`](reports/wind_disturbance_updraft_z5_2026-07-25/UPDRAFT_Z5_SUMMARY.md)
 - Gust disturbance validation: [`reports/wind_disturbance_gust_y10_2026-07-25/GUST_Y10_SUMMARY.md`](reports/wind_disturbance_gust_y10_2026-07-25/GUST_Y10_SUMMARY.md)
 - Constant crosswind validation: [`reports/wind_disturbance_crosswind_y5_2026-07-25/CROSSWIND_Y5_SUMMARY.md`](reports/wind_disturbance_crosswind_y5_2026-07-25/CROSSWIND_Y5_SUMMARY.md)
@@ -43,6 +44,7 @@ Latest controlled validation:
 | Constant crosswind validation | Complete screening | Under `5 m/s` Y-crosswind, geometric control still lowers swing by `9.2%` but tracking error is much worse than PX4 baseline |
 | Gust disturbance validation | Complete screening | Under a `10 m/s` gust, geometric control improves mean error and swing but has larger peak tracking and cable-angle excursions |
 | Vertical updraft validation | Complete screening | Under `5 m/s` +Z wind, PX4 baseline failed altitude validation while geometric control completed the circuit with altitude bias |
+| Wind disturbance envelope tooling | Complete first pass | Existing crosswind, gust, and updraft runs are consolidated into one envelope summary; generated crosswind worlds prepare `0-10 m/s` batch testing |
 
 ## Repository Layout
 

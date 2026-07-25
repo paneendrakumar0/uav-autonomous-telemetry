@@ -1,0 +1,26 @@
+[
+  {
+    "label": "crosswind_y5",
+    "type": "crosswind_y",
+    "speed_m_s": 5.0,
+    "direction": "0 1 0",
+    "world": "payload_crosswind_y5",
+    "source": "reports/wind_disturbance_crosswind_y5_2026-07-25"
+  },
+  {
+    "label": "gust_y10",
+    "type": "gust_y",
+    "speed_m_s": 10.0,
+    "direction": "0 1 0",
+    "world": "payload_gust_y10",
+    "source": "reports/wind_disturbance_gust_y10_2026-07-25"
+  },
+  {
+    "label": "updraft_z5",
+    "type": "updraft_z",
+    "speed_m_s": 5.0,
+    "direction": "0 0 1",
+    "world": "payload_updraft_z5",
+    "source": "reports/wind_disturbance_updraft_z5_2026-07-25"
+  }
+]

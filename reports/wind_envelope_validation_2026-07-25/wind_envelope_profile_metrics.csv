@@ -1,0 +1,7 @@
+case,disturbance_type,wind_speed_m_s,wind_direction,profile,tracking_valid,swing_valid,tracking_reason,world,mean_3d_error_m,rms_3d_error_m,max_3d_error_m,mean_lateral_swing_m,max_lateral_swing_m,mean_cable_angle_deg,max_cable_angle_deg
+crosswind_y5,crosswind_y,5.0,0 1 0,baseline,True,True,valid tracking telemetry,payload_crosswind_y5,0.44670057463355045,0.478232853193189,0.71033,0.5661537626636313,0.726847,34.70450547239613,46.498089
+crosswind_y5,crosswind_y,5.0,0 1 0,geometric,True,True,valid tracking telemetry,payload_crosswind_y5,1.2689849150141643,1.3013099246251203,1.7224,0.5138777825170289,0.667146,31.078767492296468,41.75725
+gust_y10,gust_y,10.0,0 1 0,baseline,True,True,valid tracking telemetry,payload_gust_y10,0.5426952305002033,0.6265869458322769,1.81618,0.5645704308943089,0.722012,34.585264629512196,46.100362
+gust_y10,gust_y,10.0,0 1 0,geometric,True,True,valid tracking telemetry,payload_gust_y10,0.45544584906427993,0.6021618947611944,2.81645,0.5274991339786871,0.826998,32.0457667088587,55.621562
+updraft_z5,updraft_z,5.0,0 0 1,baseline,False,True,mean altitude error too large (5.02 m > 1.50 m),payload_updraft_z5,6.369802277508091,6.4119808408862315,7.11646,3.211617349006891e-05,5.1e-05,0.0018396578029995945,0.002907
+updraft_z5,updraft_z,5.0,0 0 1,geometric,True,True,valid tracking telemetry,payload_updraft_z5,0.8451502794177114,0.851413466017658,1.1419,0.5214276285459555,0.683847,31.602780065407686,43.048581
