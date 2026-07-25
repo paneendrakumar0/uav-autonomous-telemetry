@@ -10,6 +10,7 @@ Latest controller benchmark: [`reports/controller_benchmark_2026-06-08/CONTROLLE
 
 Latest controlled validation:
 
+- Gust disturbance validation: [`reports/wind_disturbance_gust_y10_2026-07-25/GUST_Y10_SUMMARY.md`](reports/wind_disturbance_gust_y10_2026-07-25/GUST_Y10_SUMMARY.md)
 - Constant crosswind validation: [`reports/wind_disturbance_crosswind_y5_2026-07-25/CROSSWIND_Y5_SUMMARY.md`](reports/wind_disturbance_crosswind_y5_2026-07-25/CROSSWIND_Y5_SUMMARY.md)
 - Payload parameter sweep: [`reports/payload_parameter_sweep_2026-07-22/PAYLOAD_PARAMETER_SWEEP_SUMMARY.md`](reports/payload_parameter_sweep_2026-07-22/PAYLOAD_PARAMETER_SWEEP_SUMMARY.md)
 - Speed sweep summary: [`reports/speed_sweep_validation_2026-07-22/SPEED_SWEEP_SUMMARY.md`](reports/speed_sweep_validation_2026-07-22/SPEED_SWEEP_SUMMARY.md)
@@ -39,6 +40,7 @@ Latest controlled validation:
 | Controlled speed sweep | Complete | Geometric control is speed-dependent: weaker tracking at `0.15-0.20 rad/s`, stronger tracking and lower swing at `0.25-0.30 rad/s` |
 | Payload parameter sweep | Complete screening | Geometric control remains strong for cable-length changes, but `0.20 kg` payload mass exposes a tracking/swing tradeoff |
 | Constant crosswind validation | Complete screening | Under `5 m/s` Y-crosswind, geometric control still lowers swing by `9.2%` but tracking error is much worse than PX4 baseline |
+| Gust disturbance validation | Complete screening | Under a `10 m/s` gust, geometric control improves mean error and swing but has larger peak tracking and cable-angle excursions |
 
 ## Repository Layout
 
