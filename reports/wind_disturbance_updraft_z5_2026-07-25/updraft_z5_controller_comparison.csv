@@ -1,0 +1,8 @@
+metric,baseline,geometric,note
+tracking_valid,false,true,baseline failed altitude gate
+mean_3d_error_m,6.369802277508091,0.8451502794177114,baseline did not reach commanded altitude
+rms_3d_error_m,6.4119808408862315,0.851413466017658,baseline did not reach commanded altitude
+max_3d_error_m,7.11646,1.1419,baseline did not reach commanded altitude
+mean_z_ned_m,0.01729908361626213,-4.441023117670845,geometric remains 0.559 m above target altitude
+mean_lateral_swing_m,0.00003211617349006891,0.5214276285459555,baseline swing is not comparable because vehicle did not fly the circuit
+mean_cable_angle_deg,0.0018396578029995945,31.602780065407686,baseline swing is not comparable because vehicle did not fly the circuit
