@@ -22,5 +22,37 @@
     "direction": "0 0 1",
     "world": "payload_updraft_z5",
     "source": "reports/wind_disturbance_updraft_z5_2026-07-25"
+  },
+  {
+    "label": "crosswind_y0",
+    "type": "crosswind_y",
+    "speed_m_s": 0.0,
+    "direction": "0.0 1.0 0.0",
+    "world": "payload_crosswind_y0",
+    "source": "generated_run"
+  },
+  {
+    "label": "crosswind_y2p5",
+    "type": "crosswind_y",
+    "speed_m_s": 2.5,
+    "direction": "0.0 1.0 0.0",
+    "world": "payload_crosswind_y2p5",
+    "source": "generated_run"
+  },
+  {
+    "label": "crosswind_y7p5",
+    "type": "crosswind_y",
+    "speed_m_s": 7.5,
+    "direction": "0.0 1.0 0.0",
+    "world": "payload_crosswind_y7p5",
+    "source": "generated_run"
+  },
+  {
+    "label": "crosswind_y10",
+    "type": "crosswind_y",
+    "speed_m_s": 10.0,
+    "direction": "0.0 1.0 0.0",
+    "world": "payload_crosswind_y10",
+    "source": "generated_run"
   }
 ]

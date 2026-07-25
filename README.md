@@ -44,7 +44,7 @@ Latest controlled validation:
 | Constant crosswind validation | Complete screening | Under `5 m/s` Y-crosswind, geometric control still lowers swing by `9.2%` but tracking error is much worse than PX4 baseline |
 | Gust disturbance validation | Complete screening | Under a `10 m/s` gust, geometric control improves mean error and swing but has larger peak tracking and cable-angle excursions |
 | Vertical updraft validation | Complete screening | Under `5 m/s` +Z wind, PX4 baseline failed altitude validation while geometric control completed the circuit with altitude bias |
-| Wind disturbance envelope tooling | Complete first pass | Existing crosswind, gust, and updraft runs are consolidated into one envelope summary; generated crosswind worlds prepare `0-10 m/s` batch testing |
+| Wind disturbance envelope | Complete screening batch | Constant Y-crosswind tested at `0, 2.5, 5, 7.5, 10 m/s`; geometric control keeps `~9-10%` swing reduction but tracking degrades beyond clean air |
 
 ## Repository Layout
 

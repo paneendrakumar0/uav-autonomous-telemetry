@@ -1,6 +1,14 @@
 case,disturbance_type,wind_speed_m_s,wind_direction,profile,tracking_valid,swing_valid,tracking_reason,world,mean_3d_error_m,rms_3d_error_m,max_3d_error_m,mean_lateral_swing_m,max_lateral_swing_m,mean_cable_angle_deg,max_cable_angle_deg
+crosswind_y0,crosswind_y,0.0,0.0 1.0 0.0,baseline,True,True,valid tracking telemetry,payload_crosswind_y0,0.4431726887804878,0.47345953391707085,0.670744,0.5644489215702211,0.730208,34.60041600885891,46.778672
+crosswind_y0,crosswind_y,0.0,0.0 1.0 0.0,geometric,True,True,valid tracking telemetry,payload_crosswind_y0,0.3354450731904569,0.3514155063197105,0.598469,0.5137952263187748,0.671823,31.094748351592255,42.116795
+crosswind_y2p5,crosswind_y,2.5,0.0 1.0 0.0,baseline,True,True,valid tracking telemetry,payload_crosswind_y2p5,0.44382066074043935,0.4738750126462515,0.67108,0.5640531201919167,0.728948,34.57426900618037,46.673895
+crosswind_y2p5,crosswind_y,2.5,0.0 1.0 0.0,geometric,True,True,valid tracking telemetry,payload_crosswind_y2p5,0.649098223352319,0.6944720469511682,1.06582,0.5143916641451114,0.673428,31.13333006303888,42.240136
 crosswind_y5,crosswind_y,5.0,0 1 0,baseline,True,True,valid tracking telemetry,payload_crosswind_y5,0.44670057463355045,0.478232853193189,0.71033,0.5661537626636313,0.726847,34.70450547239613,46.498089
 crosswind_y5,crosswind_y,5.0,0 1 0,geometric,True,True,valid tracking telemetry,payload_crosswind_y5,1.2689849150141643,1.3013099246251203,1.7224,0.5138777825170289,0.667146,31.078767492296468,41.75725
+crosswind_y7p5,crosswind_y,7.5,0.0 1.0 0.0,baseline,True,True,valid tracking telemetry,payload_crosswind_y7p5,0.4501796505006105,0.4807790480321133,0.684197,0.564707612968839,0.729136,34.616797407533966,46.689264
+crosswind_y7p5,crosswind_y,7.5,0.0 1.0 0.0,geometric,True,True,valid tracking telemetry,payload_crosswind_y7p5,1.9209775437881873,1.9407661572294403,2.3604,0.5145173630226126,0.671994,31.13587181918009,42.129348
+crosswind_y10,crosswind_y,10.0,0.0 1.0 0.0,baseline,True,True,valid tracking telemetry,payload_crosswind_y10,0.4574330701051781,0.48714220567081273,0.693206,0.5644394258974151,0.730151,34.60092169467629,46.77363
+crosswind_y10,crosswind_y,10.0,0.0 1.0 0.0,geometric,True,True,valid tracking telemetry,payload_crosswind_y10,2.5981856008146638,2.6141371577619354,3.05264,0.5138836319128173,0.672675,31.098386991216657,42.182048
 gust_y10,gust_y,10.0,0 1 0,baseline,True,True,valid tracking telemetry,payload_gust_y10,0.5426952305002033,0.6265869458322769,1.81618,0.5645704308943089,0.722012,34.585264629512196,46.100362
 gust_y10,gust_y,10.0,0 1 0,geometric,True,True,valid tracking telemetry,payload_gust_y10,0.45544584906427993,0.6021618947611944,2.81645,0.5274991339786871,0.826998,32.0457667088587,55.621562
 updraft_z5,updraft_z,5.0,0 0 1,baseline,False,True,mean altitude error too large (5.02 m > 1.50 m),payload_updraft_z5,6.369802277508091,6.4119808408862315,7.11646,3.211617349006891e-05,5.1e-05,0.0018396578029995945,0.002907

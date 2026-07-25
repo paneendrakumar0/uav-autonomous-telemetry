@@ -242,6 +242,9 @@ def plot_improvements(out_dir, comparison_df):
 
 
 def write_report(out_dir, args, cases, profile_df, comparison_df):
+    represented_crosswinds = sorted(
+        profile_df[profile_df["disturbance_type"] == "crosswind_y"]["wind_speed_m_s"].dropna().unique()
+    )
     selected_profile = profile_df[
         [
             "case",
@@ -268,7 +271,7 @@ This phase turns the first wind tests into a repeatable disturbance-envelope wor
 - Angular rate: `{args.omega} rad/s`
 - Controllers: PX4 position/velocity baseline and tuned geometric attitude/thrust controller
 - Constant crosswind direction: `{args.direction}`
-- Crosswind speeds prepared for the envelope: `{", ".join(f"{speed:.1f}" for speed in args.crosswind_speeds)} m/s`
+- Crosswind speeds represented in this envelope: `{", ".join(f"{speed:.1f}" for speed in represented_crosswinds)} m/s`
 - Existing screening imports enabled: `{args.import_existing_screening}`
 - Raw per-trial telemetry retention: `{args.keep_raw_telemetry}`
 
@@ -292,9 +295,9 @@ This phase turns the first wind tests into a repeatable disturbance-envelope wor
 
 ## Interpretation
 
-The current wind evidence shows that the controller tradeoff is disturbance-dependent. Under constant Y-crosswind, the geometric controller reduces payload swing but loses substantial path-tracking accuracy relative to PX4. Under a finite Y-gust, it improves average tracking and swing but produces larger peak excursions. Under vertical updraft, PX4 baseline fails the altitude validation gate while the geometric controller completes the circuit with altitude bias.
+The completed crosswind envelope shows a clear controller tradeoff. In clean air, the geometric controller improves mean 3D tracking error by roughly `24%` and reduces mean cable angle by roughly `10%`. Once a constant Y-crosswind is introduced, the swing benefit remains nearly constant at about `9-10%`, but trajectory tracking degrades sharply. The geometric controller is already worse than PX4 at `2.5 m/s`, reaches `1.269 m` mean 3D error at `5 m/s`, and reaches `2.598 m` at `10 m/s`.
 
-This is now ready to expand into a true envelope campaign by filling the generated constant-crosswind worlds at multiple wind speeds. The important research question for the next batch is not whether the vehicle flies once, but where each controller crosses from acceptable tracking into degraded or failed behavior.
+The PX4 position/velocity baseline remains near `0.44-0.46 m` mean 3D error across the tested constant-crosswind range. This suggests PX4 handles the steady wind bias better for path tracking, while the geometric controller is still better at suppressing payload swing. The gust and updraft cases remain important boundary evidence: under the finite Y-gust, geometric control improves average tracking and swing but has larger peak excursions; under vertical updraft, PX4 baseline fails the altitude validation gate while the geometric controller completes the circuit with altitude bias.
 """
     (out_dir / "WIND_DISTURBANCE_ENVELOPE_SUMMARY.md").write_text(report)
 
@@ -421,8 +424,9 @@ def main():
     if not rows:
         raise SystemExit("No wind data available. Use --run-sim and/or --import-existing-screening.")
 
-    profile_df = pd.DataFrame(rows)
+    profile_df = pd.DataFrame(rows).sort_values(["disturbance_type", "wind_speed_m_s", "case", "profile"])
     comparison_df = pd.DataFrame(build_comparison_rows(profile_df))
+    comparison_df = comparison_df.sort_values(["disturbance_type", "wind_speed_m_s", "case", "metric"])
     profile_df.to_csv(out_dir / "wind_envelope_profile_metrics.csv", index=False)
     comparison_df.to_csv(out_dir / "wind_envelope_controller_comparison.csv", index=False)
     (out_dir / "wind_envelope_cases.json").write_text(json.dumps(cases, indent=2) + "\n")
