@@ -105,6 +105,7 @@ def write_summary_md(out_dir, args, tracking_valid, tracking_reason, summary):
         f"**Created**: {datetime.now().isoformat(timespec='seconds')}",
         f"**Profile**: `{args.profile}`",
         f"**Launch File**: `{args.launch_file}`",
+        f"**World**: `{args.world or 'none'}`",
         f"**Flight Duration**: `{args.flight_duration_s:.1f} s`",
         f"**Omega**: `{args.omega}`",
         f"**Hover Thrust**: `{args.hover_thrust}`",
@@ -165,6 +166,11 @@ def main():
     parser.add_argument("--px4-dir", default="~/PX4-Autopilot")
     parser.add_argument("--out-dir", default="")
     parser.add_argument("--gui", action="store_true", help="Open the Gazebo Classic client window during the run.")
+    parser.add_argument(
+        "--world",
+        default="",
+        help="Optional Gazebo Classic world name or absolute world path. Passed through PX4_SITL_WORLD.",
+    )
     args = parser.parse_args()
 
     repo_root = Path(args.repo_root).expanduser()
@@ -203,9 +209,13 @@ def main():
 
         print("Starting PX4 SITL...")
         headless_value = "0" if args.gui else "1"
+        sitl_env = os.environ.copy()
+        if args.world:
+            sitl_env["PX4_SITL_WORLD"] = args.world
         sitl_proc = subprocess.Popen(
             ["make", "px4_sitl", "gazebo-classic_iris_depth_payload", f"HEADLESS={headless_value}"],
             cwd=px4_dir,
+            env=sitl_env,
             stdout=px4_log,
             stderr=subprocess.STDOUT,
             preexec_fn=os.setsid,
@@ -264,6 +274,7 @@ def main():
         {
             "profile": args.profile,
             "launch_file": args.launch_file,
+            "world": args.world or "none",
             "tracking_valid": tracking_valid,
             "tracking_reason": tracking_reason,
             "output_dir": str(out_dir),
