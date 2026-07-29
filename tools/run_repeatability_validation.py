@@ -8,6 +8,12 @@ from pathlib import Path
 
 import pandas as pd
 
+from experiment_provenance import (
+    mark_raw_telemetry_discarded,
+    relative_manifest_paths,
+    write_manifest,
+)
+
 
 TRACKING_METRICS = [
     "mean_3d_error_m",
@@ -45,10 +51,13 @@ def remove_logs(run_dir):
 
 
 def remove_raw_telemetry(run_dir):
+    removed = []
     for csv_name in ["tracking_metrics.csv", "payload_swing_metrics.csv"]:
         csv_path = run_dir / csv_name
         if csv_path.exists():
             csv_path.unlink()
+            removed.append(csv_name)
+    mark_raw_telemetry_discarded(run_dir, removed)
 
 
 def profile_label(profile, trial):
@@ -165,10 +174,19 @@ def main():
     parser.add_argument("--omega", type=float, default=0.25)
     parser.add_argument("--hover-thrust", type=float, default=0.72)
     parser.add_argument("--out-dir", default="reports/repeatability_validation_2026-07-21")
-    parser.add_argument(
+    retention = parser.add_mutually_exclusive_group()
+    retention.add_argument(
         "--keep-raw-telemetry",
+        dest="keep_raw_telemetry",
         action="store_true",
-        help="Keep large per-trial tracking and payload swing CSV files after plots and summaries are generated.",
+        default=True,
+        help="Keep per-trial tracking and payload swing CSV files (default).",
+    )
+    retention.add_argument(
+        "--discard-raw-telemetry",
+        dest="keep_raw_telemetry",
+        action="store_false",
+        help="Delete per-trial raw CSV files after plots and summaries are generated.",
     )
     args = parser.parse_args()
 
@@ -233,6 +251,37 @@ def main():
     improvement_df.to_csv(out_dir / "repeatability_controller_improvement.csv", index=False)
 
     write_report(out_dir, trial_df, summary_df, improvement_df, args)
+    write_manifest(
+        out_dir,
+        experiment_type="repeatability_validation",
+        repo_root=repo_root,
+        px4_dir=Path.home() / "PX4-Autopilot",
+        parameters={
+            "profiles": ["baseline", "geometric"],
+            "trials_per_profile": args.trials,
+            "flight_duration_s": args.flight_duration_s,
+            "sitl_startup_s": args.sitl_startup_s,
+            "omega_rad_s": args.omega,
+            "hover_thrust": args.hover_thrust,
+            "target_altitude_ned_m": -5.0,
+            "max_mean_altitude_error_m": 1.0,
+        },
+        data={
+            "raw_telemetry_retention_policy": (
+                "retain" if args.keep_raw_telemetry else "discard_after_aggregation"
+            ),
+            "constituent_manifests": relative_manifest_paths(out_dir),
+            "trial_metrics_csv": "repeatability_trial_metrics.csv",
+            "aggregate_metrics_csv": "repeatability_aggregate_metrics.csv",
+            "controller_improvement_csv": "repeatability_controller_improvement.csv",
+            "summary_markdown": "REPEATABILITY_SUMMARY.md",
+        },
+        result={
+            "total_trials": int(len(trial_df)),
+            "valid_tracking_trials": int(trial_df["tracking_valid"].sum()),
+            "valid_swing_trials": int(trial_df["swing_valid"].sum()),
+        },
+    )
     print(f"Repeatability artifacts written to {out_dir}")
 
 

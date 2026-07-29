@@ -11,6 +11,12 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
+from experiment_provenance import (
+    mark_raw_telemetry_discarded,
+    relative_manifest_paths,
+    write_manifest,
+)
+
 
 TRACKING_METRICS = [
     "mean_3d_error_m",
@@ -52,10 +58,13 @@ def remove_logs(run_dir):
 
 
 def remove_raw_telemetry(run_dir):
+    removed = []
     for csv_name in ["tracking_metrics.csv", "payload_swing_metrics.csv"]:
         path = run_dir / csv_name
         if path.exists():
             path.unlink()
+            removed.append(csv_name)
+    mark_raw_telemetry_discarded(run_dir, removed)
 
 
 def read_summary(run_dir):
@@ -278,7 +287,20 @@ def main():
     parser.add_argument("--repo-root", default="~/uav-autonomous-telemetry")
     parser.add_argument("--px4-dir", default="~/PX4-Autopilot")
     parser.add_argument("--out-dir", default="reports/payload_parameter_sweep_2026-07-22")
-    parser.add_argument("--keep-raw-telemetry", action="store_true")
+    retention = parser.add_mutually_exclusive_group()
+    retention.add_argument(
+        "--keep-raw-telemetry",
+        dest="keep_raw_telemetry",
+        action="store_true",
+        default=True,
+        help="Keep per-run tracking and payload swing CSV files (default).",
+    )
+    retention.add_argument(
+        "--discard-raw-telemetry",
+        dest="keep_raw_telemetry",
+        action="store_false",
+        help="Delete per-run raw telemetry CSV files after aggregation.",
+    )
     parser.add_argument("--resume", action="store_true", help="Reuse already valid case/profile summaries in the output folder.")
     parser.add_argument("--gui", action="store_true", help="Open Gazebo Classic while each validation trial runs.")
     args = parser.parse_args()
@@ -370,6 +392,39 @@ def main():
     )
     plot_improvement(out_dir, comparison_df)
     write_report(out_dir, args, cases, profile_df, comparison_df)
+    write_manifest(
+        out_dir,
+        experiment_type="payload_parameter_sweep",
+        repo_root=repo_root,
+        px4_dir=px4_dir,
+        parameters={
+            "profiles": ["baseline", "geometric"],
+            "omega_rad_s": args.omega,
+            "hover_thrust": args.hover_thrust,
+            "flight_duration_s": args.flight_duration_s,
+            "sitl_startup_s": args.sitl_startup_s,
+            "payload_radius_m": args.payload_radius_m,
+            "cases": cases,
+            "resume_enabled": args.resume,
+        },
+        data={
+            "raw_telemetry_retention_policy": (
+                "retain" if args.keep_raw_telemetry else "discard_after_aggregation"
+            ),
+            "constituent_manifests": relative_manifest_paths(out_dir),
+            "case_definitions_json": "payload_cases.json",
+            "original_payload_sdf": "original_iris_depth_payload.sdf",
+            "profile_metrics_csv": "payload_parameter_profile_metrics.csv",
+            "controller_comparison_csv": "payload_parameter_controller_comparison.csv",
+            "summary_markdown": "PAYLOAD_PARAMETER_SWEEP_SUMMARY.md",
+        },
+        result={
+            "case_count": len(cases),
+            "profile_runs": int(len(profile_df)),
+            "valid_tracking_runs": int(profile_df["tracking_valid"].sum()),
+            "valid_swing_runs": int(profile_df["swing_valid"].sum()),
+        },
+    )
     print(f"Payload parameter sweep artifacts written to {out_dir}")
 
 

@@ -30,6 +30,10 @@ The publication path and exit criteria for payload-state feedback, disturbance
 adaptation, statistical validation, and HIL/flight testing are tracked in
 [`docs/RESEARCH_ROADMAP.md`](docs/RESEARCH_ROADMAP.md).
 
+New single and batch validation runs write versioned experiment provenance and
+retain raw telemetry by default. See
+[`docs/EXPERIMENT_PROVENANCE.md`](docs/EXPERIMENT_PROVENANCE.md).
+
 ## Project Status
 
 | Stage | Status | Evidence |

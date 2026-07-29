@@ -11,6 +11,12 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
+from experiment_provenance import (
+    mark_raw_telemetry_discarded,
+    relative_manifest_paths,
+    write_manifest,
+)
+
 
 METRICS = [
     "mean_3d_error_m",
@@ -68,10 +74,13 @@ def remove_logs(run_dir):
 
 
 def remove_raw_telemetry(run_dir):
+    removed = []
     for csv_name in ["tracking_metrics.csv", "payload_swing_metrics.csv"]:
         path = run_dir / csv_name
         if path.exists():
             path.unlink()
+            removed.append(csv_name)
+    mark_raw_telemetry_discarded(run_dir, removed)
 
 
 def build_world_xml(speed, direction):
@@ -351,7 +360,20 @@ def main():
     parser.add_argument("--run-sim", action="store_true", help="Run the generated constant-crosswind cases.")
     parser.add_argument("--resume", action="store_true", help="Reuse already existing summaries in the output folder.")
     parser.add_argument("--import-existing-screening", action="store_true", help="Import the existing 2026-07-25 wind screening trials.")
-    parser.add_argument("--keep-raw-telemetry", action="store_true")
+    retention = parser.add_mutually_exclusive_group()
+    retention.add_argument(
+        "--keep-raw-telemetry",
+        dest="keep_raw_telemetry",
+        action="store_true",
+        default=True,
+        help="Keep per-run tracking and payload swing CSV files (default).",
+    )
+    retention.add_argument(
+        "--discard-raw-telemetry",
+        dest="keep_raw_telemetry",
+        action="store_false",
+        help="Delete per-run raw telemetry CSV files after aggregation.",
+    )
     parser.add_argument("--gui", action="store_true")
     args = parser.parse_args()
 
@@ -435,6 +457,41 @@ def main():
     plot_metric_pair(out_dir, profile_df, "mean_lateral_swing_m", "wind_envelope_payload_swing.png", "mean lateral swing [m]")
     plot_improvements(out_dir, comparison_df)
     write_report(out_dir, args, cases, profile_df, comparison_df)
+    write_manifest(
+        out_dir,
+        experiment_type="wind_envelope_validation",
+        repo_root=repo_root,
+        px4_dir=px4_dir,
+        parameters={
+            "profiles": ["baseline", "geometric"],
+            "crosswind_speeds_m_s": args.crosswind_speeds,
+            "crosswind_direction": args.direction,
+            "omega_rad_s": args.omega,
+            "hover_thrust": args.hover_thrust,
+            "flight_duration_s": args.flight_duration_s,
+            "sitl_startup_s": args.sitl_startup_s,
+            "run_simulation": args.run_sim,
+            "resume_enabled": args.resume,
+            "import_existing_screening": args.import_existing_screening,
+            "cases": cases,
+        },
+        data={
+            "raw_telemetry_retention_policy": (
+                "retain" if args.keep_raw_telemetry else "discard_after_aggregation"
+            ),
+            "constituent_manifests": relative_manifest_paths(out_dir),
+            "case_definitions_json": "wind_envelope_cases.json",
+            "profile_metrics_csv": "wind_envelope_profile_metrics.csv",
+            "controller_comparison_csv": "wind_envelope_controller_comparison.csv",
+            "summary_markdown": "WIND_DISTURBANCE_ENVELOPE_SUMMARY.md",
+        },
+        result={
+            "case_count": len(cases),
+            "profile_rows": int(len(profile_df)),
+            "valid_tracking_rows": int(profile_df["tracking_valid"].sum()),
+            "valid_swing_rows": int(profile_df["swing_valid"].sum()),
+        },
+    )
     print(f"Wind-envelope artifacts written to {out_dir}")
 
 
