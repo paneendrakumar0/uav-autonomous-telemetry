@@ -34,6 +34,10 @@ New single and batch validation runs write versioned experiment provenance and
 retain raw telemetry by default. See
 [`docs/EXPERIMENT_PROVENANCE.md`](docs/EXPERIMENT_PROVENANCE.md).
 
+Repeated controller comparisons report seeded bootstrap confidence intervals
+and Hedges' `g` effect sizes. See
+[`docs/STATISTICAL_METHODS.md`](docs/STATISTICAL_METHODS.md).
+
 ## Project Status
 
 | Stage | Status | Evidence |
