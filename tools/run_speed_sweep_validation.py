@@ -7,6 +7,8 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
+from experiment_provenance import relative_manifest_paths, write_manifest
+
 
 IMPROVEMENT_METRICS = [
     "mean_3d_error_m",
@@ -189,10 +191,19 @@ def main():
     parser.add_argument("--sitl-startup-s", type=float, default=22.0)
     parser.add_argument("--hover-thrust", type=float, default=0.72)
     parser.add_argument("--out-dir", default="reports/speed_sweep_validation_2026-07-22")
-    parser.add_argument(
+    retention = parser.add_mutually_exclusive_group()
+    retention.add_argument(
         "--keep-raw-telemetry",
+        dest="keep_raw_telemetry",
         action="store_true",
-        help="Keep large per-trial tracking and payload swing CSV files in the nested repeatability folders.",
+        default=True,
+        help="Keep nested per-trial raw telemetry CSV files (default).",
+    )
+    retention.add_argument(
+        "--discard-raw-telemetry",
+        dest="keep_raw_telemetry",
+        action="store_false",
+        help="Delete nested per-trial raw telemetry CSV files after aggregation.",
     )
     args = parser.parse_args()
 
@@ -219,8 +230,7 @@ def main():
             "--out-dir",
             str(run_dir),
         ]
-        if args.keep_raw_telemetry:
-            cmd.append("--keep-raw-telemetry")
+        cmd.append("--keep-raw-telemetry" if args.keep_raw_telemetry else "--discard-raw-telemetry")
         run_command(cmd, cwd=repo_root)
 
         metrics, improvements = collect_speed_rows(out_dir, omega)
@@ -235,6 +245,34 @@ def main():
     plot_tracking_and_swing(out_dir, profile_metrics, args.omegas)
     plot_improvements(out_dir, improvement_df, args.omegas)
     write_report(out_dir, args, improvement_df, profile_metrics)
+    write_manifest(
+        out_dir,
+        experiment_type="speed_sweep_validation",
+        repo_root=repo_root,
+        px4_dir=Path.home() / "PX4-Autopilot",
+        parameters={
+            "profiles": ["baseline", "geometric"],
+            "omegas_rad_s": args.omegas,
+            "trials_per_speed_and_profile": args.trials,
+            "flight_duration_s": args.flight_duration_s,
+            "sitl_startup_s": args.sitl_startup_s,
+            "hover_thrust": args.hover_thrust,
+        },
+        data={
+            "raw_telemetry_retention_policy": (
+                "retain" if args.keep_raw_telemetry else "discard_after_aggregation"
+            ),
+            "constituent_manifests": relative_manifest_paths(out_dir),
+            "profile_metrics_csv": "speed_sweep_profile_metrics.csv",
+            "controller_improvement_csv": "speed_sweep_controller_improvement.csv",
+            "summary_markdown": "SPEED_SWEEP_SUMMARY.md",
+        },
+        result={
+            "speed_count": len(args.omegas),
+            "profile_metric_rows": int(len(profile_metrics)),
+            "comparison_rows": int(len(improvement_df)),
+        },
+    )
     print(f"Speed sweep artifacts written to {out_dir}")
 
 

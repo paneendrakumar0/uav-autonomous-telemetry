@@ -134,9 +134,13 @@ class TrackingValidationTests(unittest.TestCase):
             "swing_reason": "valid payload swing telemetry",
         }
 
-        with (
-            patch("run_single_validation.git_value", side_effect=["repository-sha", "px4-sha"]),
-            patch("run_single_validation.git_dirty", return_value=False),
+        with patch(
+            "experiment_provenance.software_snapshot",
+            return_value={
+                "repository_commit": "repository-sha",
+                "repository_dirty": False,
+                "px4_commit": "px4-sha",
+            },
         ):
             write_experiment_manifest(
                 self.root,
@@ -148,7 +152,7 @@ class TrackingValidationTests(unittest.TestCase):
 
         manifest = json.loads((self.root / "experiment_manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["schema_version"], 1)
-        self.assertEqual(manifest["experiment"]["profile"], "geometric")
+        self.assertEqual(manifest["experiment"]["parameters"]["profile"], "geometric")
         self.assertEqual(manifest["experiment"]["parameters"]["omega_rad_s"], 0.25)
         self.assertEqual(manifest["software"]["repository_commit"], "repository-sha")
         self.assertEqual(manifest["software"]["px4_commit"], "px4-sha")
