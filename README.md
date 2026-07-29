@@ -20,6 +20,16 @@ Latest controlled validation:
 - `5+5` repeatability summary: [`reports/repeatability_validation_5x5_2026-07-21/REPEATABILITY_SUMMARY.md`](reports/repeatability_validation_5x5_2026-07-21/REPEATABILITY_SUMMARY.md)
 - Baseline vs geometric comparison: [`reports/single_validation_2026-07-21_controller_comparison/CONTROLLED_BASELINE_VS_GEOMETRIC.md`](reports/single_validation_2026-07-21_controller_comparison/CONTROLLED_BASELINE_VS_GEOMETRIC.md)
 
+## Research Workflow
+
+Development now proceeds through named phase or stage branches and reviewed
+pull requests. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for branch naming,
+validation, evidence, and data-retention requirements.
+
+The publication path and exit criteria for payload-state feedback, disturbance
+adaptation, statistical validation, and HIL/flight testing are tracked in
+[`docs/RESEARCH_ROADMAP.md`](docs/RESEARCH_ROADMAP.md).
+
 ## Project Status
 
 | Stage | Status | Evidence |
@@ -51,6 +61,12 @@ Latest controlled validation:
 ```text
 .
 |-- README.md
+|-- CONTRIBUTING.md
+|-- requirements-analysis.txt
+|-- docs/
+|   `-- RESEARCH_ROADMAP.md
+|-- tests/
+|   `-- test_run_single_validation.py
 |-- ros2_ws/
 |   `-- src/uav_control/
 |       |-- src/

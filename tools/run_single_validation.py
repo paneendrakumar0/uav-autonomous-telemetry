@@ -2,8 +2,10 @@
 import argparse
 import json
 import os
+import platform
 import signal
 import subprocess
+import sys
 import time
 from datetime import datetime
 from pathlib import Path
@@ -98,6 +100,82 @@ def summarize_swing(csv_path):
     }
 
 
+def git_value(repo_dir, *args):
+    if not repo_dir.is_dir():
+        return "unavailable"
+    result = subprocess.run(
+        ["git", "-C", str(repo_dir), *args],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    value = result.stdout.strip()
+    return value if result.returncode == 0 and value else "unavailable"
+
+
+def git_dirty(repo_dir):
+    if not repo_dir.is_dir():
+        return "unavailable"
+    result = subprocess.run(
+        ["git", "-C", str(repo_dir), "status", "--porcelain"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return "unavailable"
+    return bool(result.stdout.strip())
+
+
+def write_experiment_manifest(out_dir, args, repo_root, px4_dir, summary):
+    manifest = {
+        "schema_version": 1,
+        "created_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+        "experiment": {
+            "type": "single_payload_validation",
+            "profile": args.profile,
+            "launch_file": args.launch_file,
+            "world": args.world or "none",
+            "parameters": {
+                "flight_duration_s": args.flight_duration_s,
+                "sitl_startup_s": args.sitl_startup_s,
+                "omega_rad_s": args.omega,
+                "hover_thrust": args.hover_thrust,
+                "min_samples": args.min_samples,
+                "max_abs_position_m": args.max_abs_position_m,
+                "target_altitude_ned_m": args.target_altitude_ned,
+                "max_mean_altitude_error_m": args.max_mean_altitude_error_m,
+            },
+        },
+        "software": {
+            "repository_commit": git_value(repo_root, "rev-parse", "HEAD"),
+            "repository_dirty": git_dirty(repo_root),
+            "px4_commit": git_value(px4_dir, "rev-parse", "HEAD"),
+            "ros_distro": os.environ.get("ROS_DISTRO", "unavailable"),
+            "python_version": platform.python_version(),
+            "python_executable": sys.executable,
+            "platform": platform.platform(),
+        },
+        "data": {
+            "raw_tracking_csv": "tracking_metrics.csv",
+            "raw_payload_swing_csv": "payload_swing_metrics.csv",
+            "raw_telemetry_retained": True,
+            "summary_json": "summary.json",
+            "summary_markdown": "VALIDATION_SUMMARY.md",
+        },
+        "result": {
+            "tracking_valid": summary.get("tracking_valid", False),
+            "tracking_reason": summary.get("tracking_reason", "unavailable"),
+            "swing_valid": summary.get("swing_valid", False),
+            "swing_reason": summary.get("swing_reason", "unavailable"),
+        },
+    }
+    (out_dir / "experiment_manifest.json").write_text(
+        json.dumps(manifest, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
 def write_summary_md(out_dir, args, tracking_valid, tracking_reason, summary):
     lines = [
         "# Single Validation Run",
@@ -129,14 +207,16 @@ def write_summary_md(out_dir, args, tracking_valid, tracking_reason, summary):
     lines.extend(
         [
             "",
-            "## Expected Plot Artifacts",
+            "## Expected Artifacts",
             "",
-            "Generate these with `tools/plot_validation_run.py <run_dir>`:",
+            "The runner writes the manifest. Generate the plots with "
+            "`tools/plot_validation_run.py <run_dir>`:",
             "",
             "- `validation_xy_tracking.png`",
             "- `validation_3d_tracking.png`",
             "- `validation_xyz_vs_time.png`",
             "- `validation_error_swing.png`",
+            "- `experiment_manifest.json`",
         ]
     )
 
@@ -282,6 +362,7 @@ def main():
     )
 
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
+    write_experiment_manifest(out_dir, args, repo_root, px4_dir, summary)
     write_summary_md(out_dir, args, tracking_valid, tracking_reason, summary)
 
     print(json.dumps(summary, indent=2))
