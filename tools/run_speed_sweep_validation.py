@@ -37,6 +37,7 @@ def collect_speed_rows(out_dir, omega):
     run_dir = out_dir / omega_label(omega)
     aggregate = read_required_csv(run_dir / "repeatability_aggregate_metrics.csv")
     improvement = read_required_csv(run_dir / "repeatability_controller_improvement.csv")
+    statistical = read_required_csv(run_dir / "repeatability_statistical_comparison.csv")
 
     metric_rows = []
     for _, row in aggregate.iterrows():
@@ -64,7 +65,11 @@ def collect_speed_rows(out_dir, omega):
             }
         )
 
-    return metric_rows, improvement_rows
+    statistical_rows = []
+    for _, row in statistical.iterrows():
+        statistical_rows.append({"omega_rad_s": omega, **row.to_dict()})
+
+    return metric_rows, improvement_rows, statistical_rows
 
 
 def metric_value(profile_metrics, omega, profile, metric):
@@ -135,7 +140,9 @@ def markdown_table(df, columns):
     for _, row in df[columns].iterrows():
         cells = []
         for value in row:
-            if isinstance(value, float):
+            if pd.isna(value):
+                cells.append("n/a")
+            elif isinstance(value, float):
                 cells.append(f"{value:.4f}")
             else:
                 cells.append(str(value))
@@ -143,7 +150,7 @@ def markdown_table(df, columns):
     return "\n".join(lines)
 
 
-def write_report(out_dir, args, improvement_df, profile_metrics):
+def write_report(out_dir, args, improvement_df, profile_metrics, statistical_df):
     selected_metrics = profile_metrics[profile_metrics["metric"].isin(IMPROVEMENT_METRICS)].copy()
     report = f"""# Controlled Figure-8 Speed Sweep - {date.today().isoformat()}
 
@@ -171,6 +178,12 @@ This experiment checks whether the tuned geometric controller advantage remains 
 
 {markdown_table(selected_metrics, ["omega_rad_s", "profile", "metric", "mean", "std", "min", "max"])}
 
+## Statistical Comparison
+
+Positive improvement and Hedges' `g` values favor the geometric controller.
+
+{markdown_table(statistical_df, ["omega_rad_s", "metric", "absolute_improvement", "absolute_ci_low", "absolute_ci_high", "percent_improvement", "percent_ci_low", "percent_ci_high", "hedges_g"])}
+
 ## Plots
 
 - `speed_sweep_tracking_swing.png`
@@ -190,6 +203,9 @@ def main():
     parser.add_argument("--flight-duration-s", type=float, default=75.0)
     parser.add_argument("--sitl-startup-s", type=float, default=22.0)
     parser.add_argument("--hover-thrust", type=float, default=0.72)
+    parser.add_argument("--confidence-level", type=float, default=0.95)
+    parser.add_argument("--bootstrap-resamples", type=int, default=10_000)
+    parser.add_argument("--bootstrap-seed", type=int, default=20_260_729)
     parser.add_argument("--out-dir", default="reports/speed_sweep_validation_2026-07-22")
     retention = parser.add_mutually_exclusive_group()
     retention.add_argument(
@@ -206,6 +222,12 @@ def main():
         help="Delete nested per-trial raw telemetry CSV files after aggregation.",
     )
     args = parser.parse_args()
+    if args.trials < 2:
+        parser.error("--trials must be at least 2 for uncertainty estimation")
+    if args.bootstrap_resamples < 100:
+        parser.error("--bootstrap-resamples must be at least 100")
+    if not 0.0 < args.confidence_level < 1.0:
+        parser.error("--confidence-level must be between 0 and 1")
 
     repo_root = Path.cwd()
     out_dir = Path(args.out_dir)
@@ -213,7 +235,8 @@ def main():
 
     metric_rows = []
     improvement_rows = []
-    for omega in args.omegas:
+    statistical_rows = []
+    for speed_index, omega in enumerate(args.omegas):
         run_dir = out_dir / omega_label(omega)
         cmd = [
             "./tools/run_repeatability_validation.py",
@@ -227,24 +250,33 @@ def main():
             str(omega),
             "--hover-thrust",
             str(args.hover_thrust),
+            "--confidence-level",
+            str(args.confidence_level),
+            "--bootstrap-resamples",
+            str(args.bootstrap_resamples),
+            "--bootstrap-seed",
+            str(args.bootstrap_seed + speed_index * 100),
             "--out-dir",
             str(run_dir),
         ]
         cmd.append("--keep-raw-telemetry" if args.keep_raw_telemetry else "--discard-raw-telemetry")
         run_command(cmd, cwd=repo_root)
 
-        metrics, improvements = collect_speed_rows(out_dir, omega)
+        metrics, improvements, statistics = collect_speed_rows(out_dir, omega)
         metric_rows.extend(metrics)
         improvement_rows.extend(improvements)
+        statistical_rows.extend(statistics)
 
     profile_metrics = pd.DataFrame(metric_rows)
     improvement_df = pd.DataFrame(improvement_rows)
+    statistical_df = pd.DataFrame(statistical_rows)
     profile_metrics.to_csv(out_dir / "speed_sweep_profile_metrics.csv", index=False)
     improvement_df.to_csv(out_dir / "speed_sweep_controller_improvement.csv", index=False)
+    statistical_df.to_csv(out_dir / "speed_sweep_statistical_comparison.csv", index=False)
 
     plot_tracking_and_swing(out_dir, profile_metrics, args.omegas)
     plot_improvements(out_dir, improvement_df, args.omegas)
-    write_report(out_dir, args, improvement_df, profile_metrics)
+    write_report(out_dir, args, improvement_df, profile_metrics, statistical_df)
     write_manifest(
         out_dir,
         experiment_type="speed_sweep_validation",
@@ -257,6 +289,9 @@ def main():
             "flight_duration_s": args.flight_duration_s,
             "sitl_startup_s": args.sitl_startup_s,
             "hover_thrust": args.hover_thrust,
+            "confidence_level": args.confidence_level,
+            "bootstrap_resamples": args.bootstrap_resamples,
+            "bootstrap_seed": args.bootstrap_seed,
         },
         data={
             "raw_telemetry_retention_policy": (
@@ -265,12 +300,14 @@ def main():
             "constituent_manifests": relative_manifest_paths(out_dir),
             "profile_metrics_csv": "speed_sweep_profile_metrics.csv",
             "controller_improvement_csv": "speed_sweep_controller_improvement.csv",
+            "statistical_comparison_csv": "speed_sweep_statistical_comparison.csv",
             "summary_markdown": "SPEED_SWEEP_SUMMARY.md",
         },
         result={
             "speed_count": len(args.omegas),
             "profile_metric_rows": int(len(profile_metrics)),
             "comparison_rows": int(len(improvement_df)),
+            "statistical_rows": int(len(statistical_df)),
         },
     )
     print(f"Speed sweep artifacts written to {out_dir}")

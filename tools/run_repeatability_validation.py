@@ -13,6 +13,7 @@ from experiment_provenance import (
     relative_manifest_paths,
     write_manifest,
 )
+from statistical_analysis import bootstrap_improvement
 
 
 TRACKING_METRICS = [
@@ -105,6 +106,29 @@ def improvement_rows(summary_df):
     return rows
 
 
+def statistical_rows(trial_df, args):
+    rows = []
+    for index, metric in enumerate(
+        [
+            "mean_3d_error_m",
+            "rms_3d_error_m",
+            "mean_lateral_swing_m",
+            "mean_cable_angle_deg",
+        ]
+    ):
+        baseline = trial_df[trial_df["profile"] == "baseline"][metric].astype(float)
+        geometric = trial_df[trial_df["profile"] == "geometric"][metric].astype(float)
+        comparison = bootstrap_improvement(
+            baseline,
+            geometric,
+            confidence_level=args.confidence_level,
+            resamples=args.bootstrap_resamples,
+            seed=args.bootstrap_seed + index,
+        )
+        rows.append({"metric": metric, **comparison})
+    return rows
+
+
 def markdown_table(df, columns):
     header = "| " + " | ".join(columns) + " |"
     separator = "| " + " | ".join(["---"] * len(columns)) + " |"
@@ -112,7 +136,9 @@ def markdown_table(df, columns):
     for _, row in df[columns].iterrows():
         cells = []
         for value in row:
-            if isinstance(value, float):
+            if pd.isna(value):
+                cells.append("n/a")
+            elif isinstance(value, float):
                 cells.append(f"{value:.4f}")
             else:
                 cells.append(str(value))
@@ -120,7 +146,7 @@ def markdown_table(df, columns):
     return "\n".join(lines)
 
 
-def write_report(out_dir, trial_df, summary_df, improvement_df, args):
+def write_report(out_dir, trial_df, summary_df, improvement_df, statistical_df, args):
     total_trials = len(trial_df)
     profiles = sorted(trial_df["profile"].unique())
     trials_per_profile = len(trial_df[trial_df["profile"] == profiles[0]]) if profiles else 0
@@ -155,6 +181,15 @@ This phase extends the clean June 12 restart from one controlled run per control
 
 {markdown_table(improvement_df, ["metric", "baseline_mean", "geometric_mean", "improvement_percent"])}
 
+## Statistical Comparison
+
+Positive improvement and effect-size values favor the geometric controller.
+Intervals are independent-sample percentile-bootstrap confidence intervals.
+Very large standardized effects can result from near-deterministic SITL
+variance and must not be interpreted as real-world effect magnitude.
+
+{markdown_table(statistical_df, ["metric", "baseline_n", "candidate_n", "absolute_improvement", "absolute_ci_low", "absolute_ci_high", "percent_improvement", "percent_ci_low", "percent_ci_high", "hedges_g"])}
+
 ## Interpretation
 
 All `{total_trials}` trials completed with valid tracking and payload swing telemetry. The tuned geometric controller remains better than the PX4 position/velocity baseline over the small repeatability set, with lower mean tracking error and lower payload swing-angle metrics.
@@ -173,6 +208,9 @@ def main():
     parser.add_argument("--sitl-startup-s", type=float, default=22.0)
     parser.add_argument("--omega", type=float, default=0.25)
     parser.add_argument("--hover-thrust", type=float, default=0.72)
+    parser.add_argument("--confidence-level", type=float, default=0.95)
+    parser.add_argument("--bootstrap-resamples", type=int, default=10_000)
+    parser.add_argument("--bootstrap-seed", type=int, default=20_260_729)
     parser.add_argument("--out-dir", default="reports/repeatability_validation_2026-07-21")
     retention = parser.add_mutually_exclusive_group()
     retention.add_argument(
@@ -189,6 +227,12 @@ def main():
         help="Delete per-trial raw CSV files after plots and summaries are generated.",
     )
     args = parser.parse_args()
+    if args.trials < 2:
+        parser.error("--trials must be at least 2 for uncertainty estimation")
+    if args.bootstrap_resamples < 100:
+        parser.error("--bootstrap-resamples must be at least 100")
+    if not 0.0 < args.confidence_level < 1.0:
+        parser.error("--confidence-level must be between 0 and 1")
 
     repo_root = Path.cwd()
     out_dir = Path(args.out_dir)
@@ -250,7 +294,10 @@ def main():
     improvement_df = pd.DataFrame(improvement_rows(summary_df))
     improvement_df.to_csv(out_dir / "repeatability_controller_improvement.csv", index=False)
 
-    write_report(out_dir, trial_df, summary_df, improvement_df, args)
+    statistical_df = pd.DataFrame(statistical_rows(trial_df, args))
+    statistical_df.to_csv(out_dir / "repeatability_statistical_comparison.csv", index=False)
+
+    write_report(out_dir, trial_df, summary_df, improvement_df, statistical_df, args)
     write_manifest(
         out_dir,
         experiment_type="repeatability_validation",
@@ -265,6 +312,9 @@ def main():
             "hover_thrust": args.hover_thrust,
             "target_altitude_ned_m": -5.0,
             "max_mean_altitude_error_m": 1.0,
+            "confidence_level": args.confidence_level,
+            "bootstrap_resamples": args.bootstrap_resamples,
+            "bootstrap_seed": args.bootstrap_seed,
         },
         data={
             "raw_telemetry_retention_policy": (
@@ -274,6 +324,7 @@ def main():
             "trial_metrics_csv": "repeatability_trial_metrics.csv",
             "aggregate_metrics_csv": "repeatability_aggregate_metrics.csv",
             "controller_improvement_csv": "repeatability_controller_improvement.csv",
+            "statistical_comparison_csv": "repeatability_statistical_comparison.csv",
             "summary_markdown": "REPEATABILITY_SUMMARY.md",
         },
         result={
