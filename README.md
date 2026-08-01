@@ -8,6 +8,14 @@ Final PDF report: [`reports/final_research_report_2026-06-07/uav_slung_payload_s
 
 Latest controller benchmark: [`reports/controller_benchmark_2026-06-08/CONTROLLER_BENCHMARK_SUMMARY.md`](reports/controller_benchmark_2026-06-08/CONTROLLER_BENCHMARK_SUMMARY.md)
 
+## Project Snapshot
+
+| | |
+| --- | --- |
+| **My work** | Developed and validated the ROS 2 offboard-control, telemetry, experiment, disturbance-testing, and report-generation workflow |
+| **Stack** | ROS 2, PX4 SITL, Gazebo Classic, Python, NumPy, pandas, Matplotlib |
+| **Evidence** | Start with the [final research report](reports/final_research_report_2026-06-07/uav_slung_payload_sitl_research_report_2026-06-07.pdf), [controller benchmark](reports/controller_benchmark_2026-06-08/CONTROLLER_BENCHMARK_SUMMARY.md), and [run commands](#run-commands) |
+
 Latest controlled validation:
 
 - Wind disturbance envelope screening: [`reports/wind_envelope_validation_2026-07-25/WIND_DISTURBANCE_ENVELOPE_SUMMARY.md`](reports/wind_envelope_validation_2026-07-25/WIND_DISTURBANCE_ENVELOPE_SUMMARY.md)
