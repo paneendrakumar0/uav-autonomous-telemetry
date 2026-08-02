@@ -2,6 +2,7 @@
 import argparse
 from datetime import date
 import json
+import random
 import shutil
 import subprocess
 from pathlib import Path
@@ -164,6 +165,7 @@ This phase extends the clean June 12 restart from one controlled run per control
 - Angular rate: `{args.omega} rad/s`
 - Geometric hover thrust: `{args.hover_thrust}`
 - Trials: `{trials_per_profile}` PX4 baseline + `{trials_per_profile}` tuned geometric
+- Execution order: deterministic randomization (seed `{args.run_order_seed}`)
 - Validation gate: PX4 local position must remain within `100 m`
 - Altitude gate: steady mean altitude must remain within `1.0 m` of `-5.0 m` NED
 - Payload measurement: calibrated Gazebo same-frame link pair
@@ -171,7 +173,7 @@ This phase extends the clean June 12 restart from one controlled run per control
 
 ## Trial Results
 
-{markdown_table(trial_df, ["profile", "trial", "tracking_valid", "mean_3d_error_m", "rms_3d_error_m", "mean_z_ned_m", "mean_lateral_swing_m", "mean_cable_angle_deg"])}
+{markdown_table(trial_df, ["sequence", "profile", "trial", "tracking_valid", "mean_3d_error_m", "rms_3d_error_m", "mean_z_ned_m", "mean_lateral_swing_m", "mean_cable_angle_deg"])}
 
 ## Aggregate Metrics
 
@@ -211,6 +213,12 @@ def main():
     parser.add_argument("--confidence-level", type=float, default=0.95)
     parser.add_argument("--bootstrap-resamples", type=int, default=10_000)
     parser.add_argument("--bootstrap-seed", type=int, default=20_260_729)
+    parser.add_argument(
+        "--run-order-seed",
+        type=int,
+        default=20_260_802,
+        help="Seed used to randomize controller/trial execution order.",
+    )
     parser.add_argument("--out-dir", default="reports/repeatability_validation_2026-07-21")
     retention = parser.add_mutually_exclusive_group()
     retention.add_argument(
@@ -238,12 +246,27 @@ def main():
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    run_order = [
+        {"profile": profile, "trial": trial}
+        for profile in ["baseline", "geometric"]
+        for trial in range(1, args.trials + 1)
+    ]
+    random.Random(args.run_order_seed).shuffle(run_order)
+    for sequence, run in enumerate(run_order, start=1):
+        run["sequence"] = sequence
+    (out_dir / "run_order.json").write_text(json.dumps(run_order, indent=2) + "\n")
+
     rows = []
-    for profile in ["baseline", "geometric"]:
-        for trial in range(1, args.trials + 1):
-            label = profile_label(profile, trial)
-            run_dir = out_dir / label
-            run_command(
+    for run in run_order:
+        profile = run["profile"]
+        trial = run["trial"]
+        label = profile_label(profile, trial)
+        print(
+            f"Starting randomized run {run['sequence']}/{len(run_order)}: {label}",
+            flush=True,
+        )
+        run_dir = out_dir / label
+        run_command(
                 [
                     "./tools/run_single_validation.py",
                     "--profile",
@@ -265,20 +288,20 @@ def main():
                     "--max-mean-altitude-error-m",
                     "1.0",
                 ],
-                cwd=repo_root,
-            )
-            run_command(["./tools/plot_validation_run.py", str(run_dir)], cwd=repo_root)
-            remove_logs(run_dir)
+            cwd=repo_root,
+        )
+        run_command(["./tools/plot_validation_run.py", str(run_dir)], cwd=repo_root)
+        remove_logs(run_dir)
 
-            summary = read_summary(run_dir)
-            if not summary.get("tracking_valid", False) or not summary.get("swing_valid", False):
-                raise SystemExit(
-                    f"{label} failed validation: "
-                    f"{summary.get('tracking_reason')} / {summary.get('swing_reason')}"
-                )
-            if not args.keep_raw_telemetry:
-                remove_raw_telemetry(run_dir)
-            rows.append({"trial": trial, **summary})
+        summary = read_summary(run_dir)
+        if not summary.get("tracking_valid", False) or not summary.get("swing_valid", False):
+            raise SystemExit(
+                f"{label} failed validation: "
+                f"{summary.get('tracking_reason')} / {summary.get('swing_reason')}"
+            )
+        if not args.keep_raw_telemetry:
+            remove_raw_telemetry(run_dir)
+        rows.append({"sequence": run["sequence"], "trial": trial, **summary})
 
     trial_df = pd.DataFrame(rows)
     trial_df.to_csv(out_dir / "repeatability_trial_metrics.csv", index=False)
@@ -315,6 +338,7 @@ def main():
             "confidence_level": args.confidence_level,
             "bootstrap_resamples": args.bootstrap_resamples,
             "bootstrap_seed": args.bootstrap_seed,
+            "run_order_seed": args.run_order_seed,
         },
         data={
             "raw_telemetry_retention_policy": (
@@ -326,6 +350,7 @@ def main():
             "controller_improvement_csv": "repeatability_controller_improvement.csv",
             "statistical_comparison_csv": "repeatability_statistical_comparison.csv",
             "summary_markdown": "REPEATABILITY_SUMMARY.md",
+            "run_order_json": "run_order.json",
         },
         result={
             "total_trials": int(len(trial_df)),
