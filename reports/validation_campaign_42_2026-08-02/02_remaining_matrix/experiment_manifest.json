@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-08-02T12:52:53+05:30",
+  "experiment": {
+    "type": "remaining_32_run_campaign_matrix",
+    "parameters": {
+      "run_order_seed": 20260802,
+      "flight_duration_s": 75.0,
+      "sitl_startup_s": 22.0,
+      "run_count": 32,
+      "families": {
+        "wind": 10,
+        "altitude": 6,
+        "speed": 6,
+        "payload": 6,
+        "stress": 4
+      }
+    }
+  },
+  "software": {
+    "repository_commit": "a3f0aab7ac14c9ce43ad033925310ac102dfb63a",
+    "repository_branch": "phase/42-run-validation-campaign-2026-08-02",
+    "repository_dirty": true,
+    "ros_distro": "unavailable",
+    "python_version": "3.10.12",
+    "python_executable": "/usr/bin/python3",
+    "platform": "Linux-6.6.87.1-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+    "px4_commit": "1555f2bd2229544c43966ab5f94879c41d8e1e01",
+    "px4_dirty": true
+  },
+  "data": {
+    "raw_telemetry_retention_policy": "retain",
+    "constituent_manifests": [
+      "altitude_altitude_3m_baseline/experiment_manifest.json",
+      "altitude_altitude_3m_geometric/experiment_manifest.json",
+      "altitude_altitude_5m_baseline/experiment_manifest.json",
+      "altitude_altitude_5m_geometric/experiment_manifest.json",
+      "altitude_altitude_7m_baseline/experiment_manifest.json",
+      "altitude_altitude_7m_geometric/experiment_manifest.json",
+      "payload_mass_050g_baseline/experiment_manifest.json",
+      "payload_mass_050g_geometric/experiment_manifest.json",
+      "payload_mass_100g_baseline/experiment_manifest.json",
+      "payload_mass_100g_geometric/experiment_manifest.json",
+      "payload_mass_200g_baseline/experiment_manifest.json",
+      "payload_mass_200g_geometric/experiment_manifest.json",
+      "speed_omega_020_baseline/experiment_manifest.json",
+      "speed_omega_020_geometric/experiment_manifest.json",
+      "speed_omega_025_baseline/experiment_manifest.json",
+      "speed_omega_025_geometric/experiment_manifest.json",
+      "speed_omega_030_baseline/experiment_manifest.json",
+      "speed_omega_030_geometric/experiment_manifest.json",
+      "stress_gust_y10_baseline/experiment_manifest.json",
+      "stress_gust_y10_geometric/experiment_manifest.json",
+      "stress_updraft_z5_baseline/experiment_manifest.json",
+      "stress_updraft_z5_geometric/experiment_manifest.json",
+      "wind_crosswind_y0_baseline/experiment_manifest.json",
+      "wind_crosswind_y0_geometric/experiment_manifest.json",
+      "wind_crosswind_y10_baseline/experiment_manifest.json",
+      "wind_crosswind_y10_geometric/experiment_manifest.json",
+      "wind_crosswind_y2p5_baseline/experiment_manifest.json",
+      "wind_crosswind_y2p5_geometric/experiment_manifest.json",
+      "wind_crosswind_y5_baseline/experiment_manifest.json",
+      "wind_crosswind_y5_geometric/experiment_manifest.json",
+      "wind_crosswind_y7p5_baseline/experiment_manifest.json",
+      "wind_crosswind_y7p5_geometric/experiment_manifest.json"
+    ],
+    "run_order_json": "run_order.json",
+    "run_metrics_csv": "remaining_run_metrics.csv",
+    "controller_comparison_csv": "remaining_controller_comparison.csv",
+    "summary_markdown": "REMAINING_CAMPAIGN_SUMMARY.md"
+  },
+  "result": {
+    "total_runs": 32,
+    "valid_tracking_runs": 32,
+    "valid_swing_runs": 32
+  }
+}
