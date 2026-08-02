@@ -111,10 +111,10 @@ private:
 		publish_trajectory_setpoint();
 
 		if (!command_sent_ && setpoint_counter_ >= arm_after_setpoints_) {
-			publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0F);
 			publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1.0F, 6.0F);
+			publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0F);
 			command_sent_ = true;
-			RCLCPP_INFO(get_logger(), "Sent arm and offboard mode commands");
+			RCLCPP_INFO(get_logger(), "Sent offboard mode and arm commands");
 		}
 
 		++setpoint_counter_;

@@ -291,7 +291,6 @@ def main():
             cwd=repo_root,
         )
         run_command(["./tools/plot_validation_run.py", str(run_dir)], cwd=repo_root)
-        remove_logs(run_dir)
 
         summary = read_summary(run_dir)
         if not summary.get("tracking_valid", False) or not summary.get("swing_valid", False):
@@ -299,6 +298,7 @@ def main():
                 f"{label} failed validation: "
                 f"{summary.get('tracking_reason')} / {summary.get('swing_reason')}"
             )
+        remove_logs(run_dir)
         if not args.keep_raw_telemetry:
             remove_raw_telemetry(run_dir)
         rows.append({"sequence": run["sequence"], "trial": trial, **summary})
