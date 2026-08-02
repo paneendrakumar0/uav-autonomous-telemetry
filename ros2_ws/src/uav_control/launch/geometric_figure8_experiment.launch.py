@@ -17,6 +17,8 @@ def generate_launch_description():
     integral_limit_z = LaunchConfiguration("integral_limit_z")
     integrator_leak_rate = LaunchConfiguration("integrator_leak_rate")
     max_tilt_deg = LaunchConfiguration("max_tilt_deg")
+    kp_xy = LaunchConfiguration("kp_xy")
+    kd_xy = LaunchConfiguration("kd_xy")
 
     return LaunchDescription(
         [
@@ -56,6 +58,8 @@ def generate_launch_description():
             DeclareLaunchArgument("integral_limit_z", default_value="2.0"),
             DeclareLaunchArgument("integrator_leak_rate", default_value="0.02"),
             DeclareLaunchArgument("max_tilt_deg", default_value="35.0"),
+            DeclareLaunchArgument("kp_xy", default_value="1.4"),
+            DeclareLaunchArgument("kd_xy", default_value="1.3"),
             Node(
                 package="uav_control",
                 executable="figure8_metrics_logger",
@@ -81,9 +85,9 @@ def generate_launch_description():
                         "omega": omega,
                         "altitude_ned": altitude_ned,
                         "hover_thrust": hover_thrust,
-                        "kp_xy": 1.4,
+                        "kp_xy": kp_xy,
                         "kp_z": 2.2,
-                        "kd_xy": 1.1,
+                        "kd_xy": kd_xy,
                         "kd_z": 1.4,
                         "ki_xy": ki_xy,
                         "ki_z": ki_z,
