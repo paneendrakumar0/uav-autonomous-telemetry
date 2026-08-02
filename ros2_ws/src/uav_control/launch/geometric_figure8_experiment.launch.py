@@ -11,6 +11,12 @@ def generate_launch_description():
     omega = LaunchConfiguration("omega")
     altitude_ned = LaunchConfiguration("altitude_ned")
     hover_thrust = LaunchConfiguration("hover_thrust")
+    ki_xy = LaunchConfiguration("ki_xy")
+    ki_z = LaunchConfiguration("ki_z")
+    integral_limit_xy = LaunchConfiguration("integral_limit_xy")
+    integral_limit_z = LaunchConfiguration("integral_limit_z")
+    integrator_leak_rate = LaunchConfiguration("integrator_leak_rate")
+    max_tilt_deg = LaunchConfiguration("max_tilt_deg")
 
     return LaunchDescription(
         [
@@ -44,6 +50,12 @@ def generate_launch_description():
                 default_value="0.72",
                 description="Normalized hover-thrust estimate used to scale attitude-mode thrust.",
             ),
+            DeclareLaunchArgument("ki_xy", default_value="0.35"),
+            DeclareLaunchArgument("ki_z", default_value="0.15"),
+            DeclareLaunchArgument("integral_limit_xy", default_value="5.0"),
+            DeclareLaunchArgument("integral_limit_z", default_value="2.0"),
+            DeclareLaunchArgument("integrator_leak_rate", default_value="0.02"),
+            DeclareLaunchArgument("max_tilt_deg", default_value="35.0"),
             Node(
                 package="uav_control",
                 executable="figure8_metrics_logger",
@@ -73,6 +85,12 @@ def generate_launch_description():
                         "kp_z": 2.2,
                         "kd_xy": 1.1,
                         "kd_z": 1.4,
+                        "ki_xy": ki_xy,
+                        "ki_z": ki_z,
+                        "integral_limit_xy": integral_limit_xy,
+                        "integral_limit_z": integral_limit_z,
+                        "integrator_leak_rate": integrator_leak_rate,
+                        "max_tilt_deg": max_tilt_deg,
                         "takeoff_ramp_s": 8.0,
                         "arm_after_setpoints": 50,
                     }
