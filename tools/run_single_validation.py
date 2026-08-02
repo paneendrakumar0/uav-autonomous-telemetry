@@ -118,6 +118,7 @@ def write_experiment_manifest(out_dir, args, repo_root, px4_dir, summary):
             "world": args.world or "none",
             "flight_duration_s": args.flight_duration_s,
             "sitl_startup_s": args.sitl_startup_s,
+            "dds_ready_timeout_s": getattr(args, "dds_ready_timeout_s", 30.0),
             "omega_rad_s": args.omega,
             "hover_thrust": args.hover_thrust,
             "min_samples": args.min_samples,
@@ -201,6 +202,12 @@ def main():
     parser.add_argument("--profile", choices=["geometric", "baseline", "hover"], default="geometric")
     parser.add_argument("--flight-duration-s", type=float, default=90.0)
     parser.add_argument("--sitl-startup-s", type=float, default=20.0)
+    parser.add_argument(
+        "--dds-ready-timeout-s",
+        type=float,
+        default=30.0,
+        help="Maximum additional wait for live PX4 vehicle-status telemetry before launching control.",
+    )
     parser.add_argument("--omega", type=float, default=0.25)
     parser.add_argument("--hover-thrust", type=float, default=0.72)
     parser.add_argument("--min-samples", type=int, default=500)
@@ -240,6 +247,7 @@ def main():
     agent_log = (logs_dir / "microxrceagent.log").open("w")
     px4_log = (logs_dir / "px4_sitl.log").open("w")
     ros_log = (logs_dir / "ros2_launch.log").open("w")
+    dds_log = (logs_dir / "dds_readiness.log").open("w")
 
     agent_proc = sitl_proc = ros_proc = None
     try:
@@ -270,6 +278,28 @@ def main():
             preexec_fn=os.setsid,
         )
         time.sleep(args.sitl_startup_s)
+
+        print("Waiting for live PX4 DDS telemetry...")
+        dds_ready_cmd = (
+            "source /opt/ros/humble/setup.bash && "
+            "source ~/px4_msgs_ws/install/setup.bash && "
+            f"timeout {args.dds_ready_timeout_s}s ros2 topic echo --no-daemon --once "
+            "--qos-reliability best_effort /fmu/out/vehicle_status"
+        )
+        dds_ready = subprocess.run(
+            ["bash", "-lc", dds_ready_cmd],
+            cwd=repo_root,
+            stdin=subprocess.DEVNULL,
+            stdout=dds_log,
+            stderr=subprocess.STDOUT,
+            check=False,
+        )
+        if dds_ready.returncode != 0:
+            raise RuntimeError(
+                "PX4 DDS telemetry did not become ready within "
+                f"{args.dds_ready_timeout_s:.1f} seconds; see logs/dds_readiness.log"
+            )
+        print("PX4 DDS telemetry is ready.")
 
         launch_args = [
             f"metrics_path:={tracking_path}",
@@ -311,6 +341,7 @@ def main():
         agent_log.close()
         px4_log.close()
         ros_log.close()
+        dds_log.close()
 
     tracking_valid, tracking_reason, summary = validate_tracking(
         tracking_path,

@@ -1,6 +1,7 @@
 #include <px4_msgs/msg/offboard_control_mode.hpp>
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
 #include <px4_msgs/msg/vehicle_command.hpp>
+#include <px4_msgs/msg/vehicle_status.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <array>
@@ -28,6 +29,16 @@ public:
 			create_publisher<px4_msgs::msg::TrajectorySetpoint>("/fmu/in/trajectory_setpoint", qos);
 		vehicle_command_pub_ =
 			create_publisher<px4_msgs::msg::VehicleCommand>("/fmu/in/vehicle_command", qos);
+		vehicle_status_sub_ = create_subscription<px4_msgs::msg::VehicleStatus>(
+			"/fmu/out/vehicle_status", qos,
+			[this](px4_msgs::msg::VehicleStatus::SharedPtr msg) {
+				armed_ = msg->arming_state == px4_msgs::msg::VehicleStatus::ARMING_STATE_ARMED;
+				offboard_ = msg->nav_state == px4_msgs::msg::VehicleStatus::NAVIGATION_STATE_OFFBOARD;
+				if (armed_ && offboard_ && !command_confirmed_) {
+					command_confirmed_ = true;
+					RCLCPP_INFO(get_logger(), "PX4 confirmed offboard mode and armed state");
+				}
+			});
 
 		start_time_ = now();
 		timer_ = create_wall_timer(20ms, std::bind(&Figure8Offboard::timer_callback, this));
@@ -43,6 +54,7 @@ private:
 	rclcpp::Publisher<px4_msgs::msg::OffboardControlMode>::SharedPtr offboard_control_mode_pub_;
 	rclcpp::Publisher<px4_msgs::msg::TrajectorySetpoint>::SharedPtr trajectory_setpoint_pub_;
 	rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr vehicle_command_pub_;
+	rclcpp::Subscription<px4_msgs::msg::VehicleStatus>::SharedPtr vehicle_status_sub_;
 
 	rclcpp::Time start_time_;
 	double amplitude_{5.0};
@@ -51,7 +63,9 @@ private:
 	double yaw_{0.0};
 	int arm_after_setpoints_{50};
 	int setpoint_counter_{0};
-	bool command_sent_{false};
+	bool armed_{false};
+	bool offboard_{false};
+	bool command_confirmed_{false};
 
 	uint64_t timestamp_us() const
 	{
@@ -110,11 +124,16 @@ private:
 		publish_offboard_control_mode();
 		publish_trajectory_setpoint();
 
-		if (!command_sent_ && setpoint_counter_ >= arm_after_setpoints_) {
-			publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1.0F, 6.0F);
-			publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0F);
-			command_sent_ = true;
-			RCLCPP_INFO(get_logger(), "Sent offboard mode and arm commands");
+		if (!command_confirmed_ && setpoint_counter_ >= arm_after_setpoints_ &&
+			setpoint_counter_ % 50 == 0)
+		{
+			if (!offboard_) {
+				publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1.0F, 6.0F);
+			}
+			if (!armed_) {
+				publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0F);
+			}
+			RCLCPP_INFO(get_logger(), "Requested offboard mode and arm; awaiting PX4 confirmation");
 		}
 
 		++setpoint_counter_;
