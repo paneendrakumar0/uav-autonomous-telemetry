@@ -22,7 +22,7 @@ public:
 
 		auto qos = rclcpp::QoS(rclcpp::KeepLast(20)).best_effort();
 		local_position_sub_ = create_subscription<px4_msgs::msg::VehicleLocalPosition>(
-			"/fmu/out/vehicle_local_position_v1", qos,
+			"/fmu/out/vehicle_local_position", qos,
 			std::bind(&Figure8MetricsLogger::local_position_callback, this, std::placeholders::_1));
 
 		setpoint_sub_ = create_subscription<px4_msgs::msg::TrajectorySetpoint>(
