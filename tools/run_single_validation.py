@@ -13,13 +13,25 @@ import pandas as pd
 from experiment_provenance import write_manifest
 
 
-def terminate_process(proc, sig=signal.SIGINT):
-    if proc is None or proc.poll() is not None:
+def terminate_process(proc, sig=signal.SIGINT, grace_s=5.0):
+    if proc is None:
         return
+    # Every managed child is created with setsid(), so its PID is also the
+    # process-group ID even if the immediate parent exits before cleanup.
+    process_group = proc.pid
     try:
-        os.killpg(os.getpgid(proc.pid), sig)
-    except ProcessLookupError:
-        return
+        if proc.poll() is None:
+            os.killpg(process_group, sig)
+            proc.wait(timeout=grace_s)
+    except (ProcessLookupError, subprocess.TimeoutExpired):
+        pass
+    finally:
+        # PX4's make/sitl_run.sh chain can outlive its immediate parent after
+        # SIGINT. Kill any remaining members before the next randomized run.
+        try:
+            os.killpg(process_group, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
 
 
 def cleanup_sim_processes():
@@ -284,7 +296,7 @@ def main():
             "source /opt/ros/humble/setup.bash && "
             "source ~/px4_msgs_ws/install/setup.bash && "
             f"timeout {args.dds_ready_timeout_s}s ros2 topic echo --no-daemon --once "
-            "--qos-reliability best_effort /fmu/out/vehicle_status"
+            "--qos-reliability best_effort /fmu/out/vehicle_status px4_msgs/msg/VehicleStatus"
         )
         dds_ready = subprocess.run(
             ["bash", "-lc", dds_ready_cmd],
