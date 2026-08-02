@@ -316,6 +316,7 @@ def main():
         launch_args = [
             f"metrics_path:={tracking_path}",
             f"payload_metrics_path:={swing_path}",
+            f"altitude_ned:={args.target_altitude_ned}",
         ]
         if args.profile in {"geometric", "baseline"}:
             launch_args.append(f"omega:={args.omega}")
