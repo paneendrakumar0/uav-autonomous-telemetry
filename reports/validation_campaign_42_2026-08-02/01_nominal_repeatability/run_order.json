@@ -1,0 +1,52 @@
+[
+  {
+    "profile": "geometric",
+    "trial": 3,
+    "sequence": 1
+  },
+  {
+    "profile": "baseline",
+    "trial": 5,
+    "sequence": 2
+  },
+  {
+    "profile": "geometric",
+    "trial": 1,
+    "sequence": 3
+  },
+  {
+    "profile": "geometric",
+    "trial": 5,
+    "sequence": 4
+  },
+  {
+    "profile": "baseline",
+    "trial": 3,
+    "sequence": 5
+  },
+  {
+    "profile": "geometric",
+    "trial": 2,
+    "sequence": 6
+  },
+  {
+    "profile": "baseline",
+    "trial": 2,
+    "sequence": 7
+  },
+  {
+    "profile": "baseline",
+    "trial": 1,
+    "sequence": 8
+  },
+  {
+    "profile": "geometric",
+    "trial": 4,
+    "sequence": 9
+  },
+  {
+    "profile": "baseline",
+    "trial": 4,
+    "sequence": 10
+  }
+]

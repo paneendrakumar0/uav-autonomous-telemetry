@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-08-02T11:44:04+05:30",
+  "experiment": {
+    "type": "repeatability_validation",
+    "parameters": {
+      "profiles": [
+        "baseline",
+        "geometric"
+      ],
+      "trials_per_profile": 5,
+      "flight_duration_s": 75.0,
+      "sitl_startup_s": 22.0,
+      "omega_rad_s": 0.25,
+      "hover_thrust": 0.72,
+      "target_altitude_ned_m": -5.0,
+      "max_mean_altitude_error_m": 1.0,
+      "confidence_level": 0.95,
+      "bootstrap_resamples": 10000,
+      "bootstrap_seed": 20260729,
+      "run_order_seed": 20260802
+    }
+  },
+  "software": {
+    "repository_commit": "aee618d1cbe6688a2346d5a460ffd0110e39f5a7",
+    "repository_branch": "phase/42-run-validation-campaign-2026-08-02",
+    "repository_dirty": true,
+    "ros_distro": "unavailable",
+    "python_version": "3.10.12",
+    "python_executable": "/usr/bin/python3",
+    "platform": "Linux-6.6.87.1-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+    "px4_commit": "1555f2bd2229544c43966ab5f94879c41d8e1e01",
+    "px4_dirty": true
+  },
+  "data": {
+    "raw_telemetry_retention_policy": "retain",
+    "constituent_manifests": [
+      "baseline_trial_01/experiment_manifest.json",
+      "baseline_trial_02/experiment_manifest.json",
+      "baseline_trial_03/experiment_manifest.json",
+      "baseline_trial_04/experiment_manifest.json",
+      "baseline_trial_05/experiment_manifest.json",
+      "geometric_trial_01/experiment_manifest.json",
+      "geometric_trial_02/experiment_manifest.json",
+      "geometric_trial_03/experiment_manifest.json",
+      "geometric_trial_04/experiment_manifest.json",
+      "geometric_trial_05/experiment_manifest.json"
+    ],
+    "trial_metrics_csv": "repeatability_trial_metrics.csv",
+    "aggregate_metrics_csv": "repeatability_aggregate_metrics.csv",
+    "controller_improvement_csv": "repeatability_controller_improvement.csv",
+    "statistical_comparison_csv": "repeatability_statistical_comparison.csv",
+    "summary_markdown": "REPEATABILITY_SUMMARY.md",
+    "run_order_json": "run_order.json"
+  },
+  "result": {
+    "total_trials": 10,
+    "valid_tracking_trials": 10,
+    "valid_swing_trials": 10
+  }
+}
