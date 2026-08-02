@@ -143,12 +143,12 @@ public:
 		max_thrust_ = declare_parameter<double>("max_thrust", 0.90);
 		takeoff_ramp_s_ = declare_parameter<double>("takeoff_ramp_s", 8.0);
 		attitude_setpoint_topic_ =
-			declare_parameter<std::string>("attitude_setpoint_topic", "/fmu/in/vehicle_attitude_setpoint_v1");
+			declare_parameter<std::string>("attitude_setpoint_topic", "/fmu/in/vehicle_attitude_setpoint");
 		arm_after_setpoints_ = declare_parameter<int>("arm_after_setpoints", 50);
 
 		auto qos = rclcpp::QoS(rclcpp::KeepLast(10)).best_effort();
 		local_position_sub_ = create_subscription<px4_msgs::msg::VehicleLocalPosition>(
-			"/fmu/out/vehicle_local_position_v1", qos,
+			"/fmu/out/vehicle_local_position", qos,
 			std::bind(&GeometricFigure8Attitude::local_position_callback, this, std::placeholders::_1));
 		offboard_control_mode_pub_ =
 			create_publisher<px4_msgs::msg::OffboardControlMode>("/fmu/in/offboard_control_mode", qos);
@@ -191,7 +191,7 @@ private:
 	double min_thrust_{0.15};
 	double max_thrust_{0.90};
 	double takeoff_ramp_s_{8.0};
-	std::string attitude_setpoint_topic_{"/fmu/in/vehicle_attitude_setpoint_v1"};
+	std::string attitude_setpoint_topic_{"/fmu/in/vehicle_attitude_setpoint"};
 	int arm_after_setpoints_{50};
 	int setpoint_counter_{0};
 	bool command_sent_{false};
@@ -234,8 +234,6 @@ private:
 		msg.acceleration = false;
 		msg.attitude = true;
 		msg.body_rate = false;
-		msg.thrust_and_torque = false;
-		msg.direct_actuator = false;
 		msg.timestamp = timestamp_us();
 		offboard_control_mode_pub_->publish(msg);
 	}

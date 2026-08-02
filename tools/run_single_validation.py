@@ -35,7 +35,10 @@ def validate_tracking(csv_path, min_samples, max_abs_position_m, target_altitude
     if not csv_path.exists():
         return False, "missing tracking CSV", {}
 
-    df = pd.read_csv(csv_path)
+    try:
+        df = pd.read_csv(csv_path)
+    except pd.errors.EmptyDataError:
+        return False, "empty tracking CSV", {"samples": 0}
     if len(df) < min_samples:
         return False, f"too few tracking samples ({len(df)} < {min_samples})", {"samples": len(df)}
 
@@ -78,7 +81,10 @@ def summarize_swing(csv_path):
     if not csv_path.exists():
         return {"swing_valid": False, "swing_reason": "missing payload swing CSV"}
 
-    df = pd.read_csv(csv_path)
+    try:
+        df = pd.read_csv(csv_path)
+    except pd.errors.EmptyDataError:
+        return {"swing_valid": False, "swing_reason": "empty payload swing CSV"}
     if df.empty:
         return {"swing_valid": False, "swing_reason": "empty payload swing CSV"}
 
@@ -240,6 +246,7 @@ def main():
         print("Starting MicroXRCEAgent...")
         agent_proc = subprocess.Popen(
             ["MicroXRCEAgent", "udp4", "-p", "8888"],
+            stdin=subprocess.DEVNULL,
             stdout=agent_log,
             stderr=subprocess.STDOUT,
             preexec_fn=os.setsid,
@@ -255,6 +262,9 @@ def main():
             ["make", "px4_sitl", "gazebo-classic_iris_depth_payload", f"HEADLESS={headless_value}"],
             cwd=px4_dir,
             env=sitl_env,
+            # Keep PX4's shell input open. /dev/null is treated as repeated EOF
+            # and causes the SITL prompt to flood per-run logs.
+            stdin=subprocess.PIPE,
             stdout=px4_log,
             stderr=subprocess.STDOUT,
             preexec_fn=os.setsid,
@@ -281,6 +291,7 @@ def main():
         ros_proc = subprocess.Popen(
             ["bash", "-lc", ros_cmd],
             cwd=repo_root,
+            stdin=subprocess.DEVNULL,
             stdout=ros_log,
             stderr=subprocess.STDOUT,
             preexec_fn=os.setsid,
