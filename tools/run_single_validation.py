@@ -2,6 +2,7 @@
 import argparse
 import json
 import os
+import shlex
 import signal
 import subprocess
 import time
@@ -392,10 +393,11 @@ def main():
                 ]
             )
 
+        repo_setup = repo_root / "ros2_ws/install/setup.bash"
         ros_cmd = (
             "source /opt/ros/humble/setup.bash && "
             "source ~/px4_msgs_ws/install/setup.bash && "
-            "source ~/uav-autonomous-telemetry/ros2_ws/install/setup.bash && "
+            f"source {shlex.quote(str(repo_setup))} && "
             f"ros2 launch uav_control {args.launch_file} "
             + " ".join(launch_args)
         )
