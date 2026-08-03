@@ -95,6 +95,12 @@ class TrackingValidationTests(unittest.TestCase):
                 "cable_length_m": 1.0,
                 "lateral_swing_m": 0.4,
                 "cable_angle_deg": 20.0,
+                "disturbance_ax_n_m_s2": 3.0,
+                "disturbance_ay_e_m_s2": 4.0,
+                "payload_correction_ax_n_m_s2": 0.6,
+                "payload_correction_ay_e_m_s2": 0.8,
+                "cable_qdot_n_s": 0.0,
+                "cable_qdot_e_s": 2.0,
             },
             {
                 "t_s": 26.0,
@@ -102,6 +108,12 @@ class TrackingValidationTests(unittest.TestCase):
                 "cable_length_m": 1.0,
                 "lateral_swing_m": 0.6,
                 "cable_angle_deg": 30.0,
+                "disturbance_ax_n_m_s2": 0.0,
+                "disturbance_ay_e_m_s2": 0.0,
+                "payload_correction_ax_n_m_s2": 0.0,
+                "payload_correction_ay_e_m_s2": 0.0,
+                "cable_qdot_n_s": 0.0,
+                "cable_qdot_e_s": 0.0,
             },
         ]
         write_csv(path, list(rows[0]), rows)
@@ -112,6 +124,9 @@ class TrackingValidationTests(unittest.TestCase):
         self.assertEqual(metrics["pose_source"], "gazebo_same_frame")
         self.assertAlmostEqual(metrics["mean_lateral_swing_m"], 0.5)
         self.assertAlmostEqual(metrics["mean_cable_angle_deg"], 25.0)
+        self.assertAlmostEqual(metrics["mean_disturbance_estimate_m_s2"], 2.5)
+        self.assertAlmostEqual(metrics["mean_payload_correction_m_s2"], 0.5)
+        self.assertAlmostEqual(metrics["mean_cable_direction_rate_s"], 1.0)
 
     def test_writes_versioned_experiment_manifest(self):
         args = SimpleNamespace(
@@ -154,6 +169,8 @@ class TrackingValidationTests(unittest.TestCase):
         self.assertEqual(manifest["schema_version"], 1)
         self.assertEqual(manifest["experiment"]["parameters"]["profile"], "geometric")
         self.assertEqual(manifest["experiment"]["parameters"]["omega_rad_s"], 0.25)
+        self.assertEqual(manifest["experiment"]["parameters"]["disturbance_observer_gain"], 0.0)
+        self.assertEqual(manifest["experiment"]["parameters"]["payload_swing_kp"], 0.0)
         self.assertEqual(manifest["software"]["repository_commit"], "repository-sha")
         self.assertEqual(manifest["software"]["px4_commit"], "px4-sha")
         self.assertFalse(manifest["software"]["repository_dirty"])

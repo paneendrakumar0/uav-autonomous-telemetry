@@ -7,6 +7,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(px4_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 # The Flight Controller
 add_executable(offboard_control src/offboard_control.cpp)
@@ -22,7 +23,7 @@ ament_target_dependencies(hover_offboard rclcpp px4_msgs)
 
 # Geometric attitude/thrust Figure-8 prototype
 add_executable(geometric_figure8_attitude src/geometric_figure8_attitude.cpp)
-ament_target_dependencies(geometric_figure8_attitude rclcpp px4_msgs)
+ament_target_dependencies(geometric_figure8_attitude rclcpp px4_msgs geometry_msgs)
 target_include_directories(geometric_figure8_attitude PRIVATE include)
 
 # The New Telemetry Logger

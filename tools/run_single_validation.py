@@ -105,7 +105,7 @@ def summarize_swing(csv_path):
         steady = df
 
     pose_source = steady["pose_source"].mode().iloc[0] if "pose_source" in steady and not steady.empty else "unknown"
-    return {
+    summary = {
         "swing_valid": True,
         "swing_reason": "valid payload swing telemetry",
         "swing_samples": int(len(df)),
@@ -116,6 +116,26 @@ def summarize_swing(csv_path):
         "mean_cable_angle_deg": float(steady["cable_angle_deg"].mean()),
         "max_cable_angle_deg": float(steady["cable_angle_deg"].max()),
     }
+    optional_vector_metrics = {
+        "disturbance_estimate_m_s2": (
+            "disturbance_ax_n_m_s2",
+            "disturbance_ay_e_m_s2",
+        ),
+        "payload_correction_m_s2": (
+            "payload_correction_ax_n_m_s2",
+            "payload_correction_ay_e_m_s2",
+        ),
+        "cable_direction_rate_s": (
+            "cable_qdot_n_s",
+            "cable_qdot_e_s",
+        ),
+    }
+    for label, (x_column, y_column) in optional_vector_metrics.items():
+        if x_column in steady and y_column in steady:
+            magnitude = (steady[x_column] ** 2 + steady[y_column] ** 2) ** 0.5
+            summary[f"mean_{label}"] = float(magnitude.mean())
+            summary[f"max_{label}"] = float(magnitude.max())
+    return summary
 
 
 def write_experiment_manifest(out_dir, args, repo_root, px4_dir, summary):
@@ -141,6 +161,13 @@ def write_experiment_manifest(out_dir, args, repo_root, px4_dir, summary):
             "geometric_max_tilt_deg": getattr(args, "geometric_max_tilt_deg", 35.0),
             "geometric_kp_xy": getattr(args, "geometric_kp_xy", 1.4),
             "geometric_kd_xy": getattr(args, "geometric_kd_xy", 1.1),
+            "disturbance_observer_gain": getattr(args, "disturbance_observer_gain", 0.0),
+            "disturbance_filter_hz": getattr(args, "disturbance_filter_hz", 0.5),
+            "disturbance_limit_xy": getattr(args, "disturbance_limit_xy", 3.0),
+            "payload_swing_kp": getattr(args, "payload_swing_kp", 0.0),
+            "payload_swing_kd": getattr(args, "payload_swing_kd", 0.0),
+            "payload_correction_limit_xy": getattr(args, "payload_correction_limit_xy", 2.0),
+            "payload_state_timeout_s": getattr(args, "payload_state_timeout_s", 0.15),
             "min_samples": args.min_samples,
             "max_abs_position_m": args.max_abs_position_m,
             "target_altitude_ned_m": args.target_altitude_ned,
@@ -238,6 +265,13 @@ def main():
     parser.add_argument("--geometric-max-tilt-deg", type=float, default=35.0)
     parser.add_argument("--geometric-kp-xy", type=float, default=1.4)
     parser.add_argument("--geometric-kd-xy", type=float, default=1.1)
+    parser.add_argument("--disturbance-observer-gain", type=float, default=0.0)
+    parser.add_argument("--disturbance-filter-hz", type=float, default=0.5)
+    parser.add_argument("--disturbance-limit-xy", type=float, default=3.0)
+    parser.add_argument("--payload-swing-kp", type=float, default=0.0)
+    parser.add_argument("--payload-swing-kd", type=float, default=0.0)
+    parser.add_argument("--payload-correction-limit-xy", type=float, default=2.0)
+    parser.add_argument("--payload-state-timeout-s", type=float, default=0.15)
     parser.add_argument("--min-samples", type=int, default=500)
     parser.add_argument("--max-abs-position-m", type=float, default=100.0)
     parser.add_argument("--target-altitude-ned", type=float, default=-5.0)
@@ -348,6 +382,13 @@ def main():
                     f"max_tilt_deg:={args.geometric_max_tilt_deg}",
                     f"kp_xy:={args.geometric_kp_xy}",
                     f"kd_xy:={args.geometric_kd_xy}",
+                    f"disturbance_observer_gain:={args.disturbance_observer_gain}",
+                    f"disturbance_filter_hz:={args.disturbance_filter_hz}",
+                    f"disturbance_limit_xy:={args.disturbance_limit_xy}",
+                    f"payload_swing_kp:={args.payload_swing_kp}",
+                    f"payload_swing_kd:={args.payload_swing_kd}",
+                    f"payload_correction_limit_xy:={args.payload_correction_limit_xy}",
+                    f"payload_state_timeout_s:={args.payload_state_timeout_s}",
                 ]
             )
 

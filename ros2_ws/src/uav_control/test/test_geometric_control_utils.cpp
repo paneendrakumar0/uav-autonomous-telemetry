@@ -44,3 +44,41 @@ TEST(GeometricControlUtils, LeavesFeasibleAccelerationUnchanged)
 	EXPECT_DOUBLE_EQ(result.y, command.y);
 	EXPECT_DOUBLE_EQ(result.z, command.z);
 }
+
+TEST(GeometricControlUtils, FiltersAndBoundsHorizontalDisturbanceEstimate)
+{
+	const uav_control::Vector3 previous{};
+	const uav_control::Vector3 measured{10.0, 0.0, 5.0};
+	const uav_control::Vector3 applied{};
+	const auto result = uav_control::update_disturbance_estimate(
+		previous, measured, applied, 1.0, 10.0, 2.0, true);
+	EXPECT_NEAR(result.x, 2.0, 1e-9);
+	EXPECT_DOUBLE_EQ(result.y, 0.0);
+	EXPECT_DOUBLE_EQ(result.z, 0.0);
+}
+
+TEST(GeometricControlUtils, ClearsDisturbanceEstimateWhenDisabled)
+{
+	const auto result = uav_control::update_disturbance_estimate(
+		{1.0, -2.0, 0.0}, {5.0, 5.0, 0.0}, {0.0, 0.0, 0.0}, 0.02, 0.5, 3.0, false);
+	EXPECT_DOUBLE_EQ(result.x, 0.0);
+	EXPECT_DOUBLE_EQ(result.y, 0.0);
+	EXPECT_DOUBLE_EQ(result.z, 0.0);
+}
+
+TEST(GeometricControlUtils, ComputesBoundedPayloadSwingCorrection)
+{
+	const auto result = uav_control::payload_swing_correction(
+		{0.6, 0.8, 0.0}, {0.0, 0.0, 0.0}, 2.0, 0.0, 1.0, true);
+	EXPECT_NEAR(result.x, 0.6, 1e-9);
+	EXPECT_NEAR(result.y, 0.8, 1e-9);
+	EXPECT_DOUBLE_EQ(result.z, 0.0);
+}
+
+TEST(GeometricControlUtils, DisablesPayloadSwingCorrectionExplicitly)
+{
+	const auto result = uav_control::payload_swing_correction(
+		{1.0, 1.0, 0.0}, {1.0, 1.0, 0.0}, 5.0, 5.0, 1.0, false);
+	EXPECT_DOUBLE_EQ(result.x, 0.0);
+	EXPECT_DOUBLE_EQ(result.y, 0.0);
+}

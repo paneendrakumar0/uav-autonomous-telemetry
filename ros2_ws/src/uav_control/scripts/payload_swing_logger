@@ -7,6 +7,7 @@ import struct
 from pathlib import Path
 
 import rclpy
+from geometry_msgs.msg import Vector3Stamped
 from px4_msgs.msg import VehicleLocalPosition
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
@@ -22,6 +23,15 @@ class PayloadSwingLogger(Node):
         self.declare_parameter("timer_period_s", 0.01)
         self.declare_parameter("vehicle_pose_index", 0)
         self.declare_parameter("payload_pose_index", 1)
+        self.declare_parameter("cable_direction_topic", "/uav_control/payload_cable_direction")
+        self.declare_parameter("cable_direction_rate_topic", "/uav_control/payload_cable_direction_rate")
+        self.declare_parameter("direction_rate_filter_hz", 3.0)
+        self.declare_parameter(
+            "disturbance_estimate_topic", "/uav_control/estimated_disturbance_acceleration"
+        )
+        self.declare_parameter(
+            "payload_correction_topic", "/uav_control/payload_swing_correction"
+        )
 
         output_path = Path(
             self.get_parameter("output_path").get_parameter_value().string_value
@@ -45,10 +55,25 @@ class PayloadSwingLogger(Node):
                 "lateral_swing_m",
                 "cable_angle_deg",
                 "pose_source",
+                "cable_q_n",
+                "cable_q_e",
+                "cable_q_d",
+                "cable_qdot_n_s",
+                "cable_qdot_e_s",
+                "cable_qdot_d_s",
+                "disturbance_ax_n_m_s2",
+                "disturbance_ay_e_m_s2",
+                "payload_correction_ax_n_m_s2",
+                "payload_correction_ay_e_m_s2",
             ]
         )
 
         self.latest_uav = None
+        self.last_cable_direction = None
+        self.last_cable_direction_time_s = None
+        self.filtered_cable_direction_rate = (0.0, 0.0, 0.0)
+        self.latest_disturbance_estimate = (0.0, 0.0, 0.0)
+        self.latest_payload_correction = (0.0, 0.0, 0.0)
         self.samples = 0
         self.start_time_ns = self.get_clock().now().nanoseconds
 
@@ -62,6 +87,39 @@ class PayloadSwingLogger(Node):
             VehicleLocalPosition,
             "/fmu/out/vehicle_local_position",
             self.vehicle_local_position_callback,
+            qos,
+        )
+        cable_direction_topic = (
+            self.get_parameter("cable_direction_topic").get_parameter_value().string_value
+        )
+        cable_direction_rate_topic = (
+            self.get_parameter("cable_direction_rate_topic").get_parameter_value().string_value
+        )
+        self.direction_rate_filter_hz = (
+            self.get_parameter("direction_rate_filter_hz").get_parameter_value().double_value
+        )
+        self.cable_direction_pub = self.create_publisher(
+            Vector3Stamped, cable_direction_topic, qos
+        )
+        self.cable_direction_rate_pub = self.create_publisher(
+            Vector3Stamped, cable_direction_rate_topic, qos
+        )
+        disturbance_estimate_topic = (
+            self.get_parameter("disturbance_estimate_topic").get_parameter_value().string_value
+        )
+        payload_correction_topic = (
+            self.get_parameter("payload_correction_topic").get_parameter_value().string_value
+        )
+        self.create_subscription(
+            Vector3Stamped,
+            disturbance_estimate_topic,
+            self.disturbance_estimate_callback,
+            qos,
+        )
+        self.create_subscription(
+            Vector3Stamped,
+            payload_correction_topic,
+            self.payload_correction_callback,
             qos,
         )
 
@@ -89,6 +147,16 @@ class PayloadSwingLogger(Node):
         if not (math.isfinite(msg.x) and math.isfinite(msg.y) and math.isfinite(msg.z)):
             return
         self.latest_uav = (float(msg.x), float(msg.y), -float(msg.z))
+
+    def disturbance_estimate_callback(self, msg):
+        values = (float(msg.vector.x), float(msg.vector.y), float(msg.vector.z))
+        if all(math.isfinite(value) for value in values):
+            self.latest_disturbance_estimate = values
+
+    def payload_correction_callback(self, msg):
+        values = (float(msg.vector.x), float(msg.vector.y), float(msg.vector.z))
+        if all(math.isfinite(value) for value in values):
+            self.latest_payload_correction = values
 
     def poll_udp(self):
         while True:
@@ -162,6 +230,17 @@ class PayloadSwingLogger(Node):
         angle_deg = math.degrees(math.atan2(lateral, abs(dz)))
         t_s = (self.get_clock().now().nanoseconds - self.start_time_ns) * 1e-9
 
+        cable_direction_ned = (math.nan, math.nan, math.nan)
+        cable_direction_rate_ned = (math.nan, math.nan, math.nan)
+        if pose_source == "gazebo_link_pair" and cable_length > 1e-6:
+            cable_direction_ned = (
+                dx / cable_length,
+                dy / cable_length,
+                -dz / cable_length,
+            )
+            self.publish_payload_state(cable_direction_ned, t_s)
+            cable_direction_rate_ned = self.filtered_cable_direction_rate
+
         self.writer.writerow(
             [
                 f"{t_s:.6f}",
@@ -178,11 +257,51 @@ class PayloadSwingLogger(Node):
                 f"{lateral:.6f}",
                 f"{angle_deg:.6f}",
                 pose_source,
+                *(f"{value:.6f}" for value in cable_direction_ned),
+                *(f"{value:.6f}" for value in cable_direction_rate_ned),
+                f"{self.latest_disturbance_estimate[0]:.6f}",
+                f"{self.latest_disturbance_estimate[1]:.6f}",
+                f"{self.latest_payload_correction[0]:.6f}",
+                f"{self.latest_payload_correction[1]:.6f}",
             ]
         )
         self.samples += 1
         if self.samples % 100 == 0:
             self.csv_file.flush()
+
+    def publish_payload_state(self, cable_direction_ned, t_s):
+        rate = (0.0, 0.0, 0.0)
+        if self.last_cable_direction is not None and self.last_cable_direction_time_s is not None:
+            dt_s = t_s - self.last_cable_direction_time_s
+            if 1e-4 < dt_s < 0.2:
+                raw_rate = tuple(
+                    (current - previous) / dt_s
+                    for current, previous in zip(cable_direction_ned, self.last_cable_direction)
+                )
+                alpha = 1.0 - math.exp(
+                    -2.0 * math.pi * max(0.0, self.direction_rate_filter_hz) * dt_s
+                )
+                rate = tuple(
+                    previous + alpha * (current - previous)
+                    for previous, current in zip(self.filtered_cable_direction_rate, raw_rate)
+                )
+
+        self.last_cable_direction = cable_direction_ned
+        self.last_cable_direction_time_s = t_s
+        self.filtered_cable_direction_rate = rate
+        stamp = self.get_clock().now().to_msg()
+
+        direction_msg = Vector3Stamped()
+        direction_msg.header.stamp = stamp
+        direction_msg.header.frame_id = "local_ned"
+        direction_msg.vector.x, direction_msg.vector.y, direction_msg.vector.z = cable_direction_ned
+        self.cable_direction_pub.publish(direction_msg)
+
+        rate_msg = Vector3Stamped()
+        rate_msg.header.stamp = stamp
+        rate_msg.header.frame_id = "local_ned"
+        rate_msg.vector.x, rate_msg.vector.y, rate_msg.vector.z = rate
+        self.cable_direction_rate_pub.publish(rate_msg)
 
     def destroy_node(self):
         samples = self.samples

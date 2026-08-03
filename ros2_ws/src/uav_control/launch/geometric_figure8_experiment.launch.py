@@ -19,6 +19,13 @@ def generate_launch_description():
     max_tilt_deg = LaunchConfiguration("max_tilt_deg")
     kp_xy = LaunchConfiguration("kp_xy")
     kd_xy = LaunchConfiguration("kd_xy")
+    disturbance_observer_gain = LaunchConfiguration("disturbance_observer_gain")
+    disturbance_filter_hz = LaunchConfiguration("disturbance_filter_hz")
+    disturbance_limit_xy = LaunchConfiguration("disturbance_limit_xy")
+    payload_swing_kp = LaunchConfiguration("payload_swing_kp")
+    payload_swing_kd = LaunchConfiguration("payload_swing_kd")
+    payload_correction_limit_xy = LaunchConfiguration("payload_correction_limit_xy")
+    payload_state_timeout_s = LaunchConfiguration("payload_state_timeout_s")
 
     return LaunchDescription(
         [
@@ -60,6 +67,13 @@ def generate_launch_description():
             DeclareLaunchArgument("max_tilt_deg", default_value="35.0"),
             DeclareLaunchArgument("kp_xy", default_value="1.4"),
             DeclareLaunchArgument("kd_xy", default_value="1.1"),
+            DeclareLaunchArgument("disturbance_observer_gain", default_value="0.0"),
+            DeclareLaunchArgument("disturbance_filter_hz", default_value="0.5"),
+            DeclareLaunchArgument("disturbance_limit_xy", default_value="3.0"),
+            DeclareLaunchArgument("payload_swing_kp", default_value="0.0"),
+            DeclareLaunchArgument("payload_swing_kd", default_value="0.0"),
+            DeclareLaunchArgument("payload_correction_limit_xy", default_value="2.0"),
+            DeclareLaunchArgument("payload_state_timeout_s", default_value="0.15"),
             Node(
                 package="uav_control",
                 executable="figure8_metrics_logger",
@@ -95,6 +109,13 @@ def generate_launch_description():
                         "integral_limit_z": integral_limit_z,
                         "integrator_leak_rate": integrator_leak_rate,
                         "max_tilt_deg": max_tilt_deg,
+                        "disturbance_observer_gain": disturbance_observer_gain,
+                        "disturbance_filter_hz": disturbance_filter_hz,
+                        "disturbance_limit_xy": disturbance_limit_xy,
+                        "payload_swing_kp": payload_swing_kp,
+                        "payload_swing_kd": payload_swing_kd,
+                        "payload_correction_limit_xy": payload_correction_limit_xy,
+                        "payload_state_timeout_s": payload_state_timeout_s,
                         "takeoff_ramp_s": 8.0,
                         "arm_after_setpoints": 50,
                     }
