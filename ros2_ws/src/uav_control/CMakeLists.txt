@@ -23,6 +23,7 @@ ament_target_dependencies(hover_offboard rclcpp px4_msgs)
 # Geometric attitude/thrust Figure-8 prototype
 add_executable(geometric_figure8_attitude src/geometric_figure8_attitude.cpp)
 ament_target_dependencies(geometric_figure8_attitude rclcpp px4_msgs)
+target_include_directories(geometric_figure8_attitude PRIVATE include)
 
 # The New Telemetry Logger
 add_executable(telemetry_logger src/telemetry_logger.cpp)
@@ -50,5 +51,11 @@ install(PROGRAMS
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
 )
+
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_geometric_control_utils test/test_geometric_control_utils.cpp)
+  target_include_directories(test_geometric_control_utils PRIVATE include)
+endif()
 
 ament_package()

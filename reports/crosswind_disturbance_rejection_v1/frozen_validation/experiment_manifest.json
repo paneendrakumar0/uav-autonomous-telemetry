@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-08-02T15:52:37+05:30",
+  "experiment": {
+    "type": "frozen_crosswind_candidate_validation",
+    "parameters": {
+      "profiles": [
+        "baseline",
+        "geometric"
+      ],
+      "wind_speeds_m_s": [
+        0.0,
+        5.0,
+        10.0
+      ],
+      "trials_per_profile_and_wind": 5,
+      "run_order_seed": 20260803,
+      "candidate_ki_xy": 0.35,
+      "candidate_kd_xy": 1.3,
+      "candidate_max_tilt_deg": 35.0,
+      "confidence_level": 0.95,
+      "bootstrap_resamples": 10000,
+      "bootstrap_seed": 20260803
+    }
+  },
+  "software": {
+    "repository_commit": "5732360e141949744516b73e136a7fc9f93974e6",
+    "repository_branch": "phase/crosswind-disturbance-rejection-v1",
+    "repository_dirty": true,
+    "ros_distro": "unavailable",
+    "python_version": "3.10.12",
+    "python_executable": "/usr/bin/python3",
+    "platform": "Linux-6.6.87.1-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+    "px4_commit": "1555f2bd2229544c43966ab5f94879c41d8e1e01",
+    "px4_dirty": true
+  },
+  "data": {
+    "raw_telemetry_retention_policy": "retain",
+    "constituent_manifests": [
+      "wind_y0_baseline_trial_01/experiment_manifest.json",
+      "wind_y0_baseline_trial_02/experiment_manifest.json",
+      "wind_y0_baseline_trial_03/experiment_manifest.json",
+      "wind_y0_baseline_trial_04/experiment_manifest.json",
+      "wind_y0_baseline_trial_05/experiment_manifest.json",
+      "wind_y0_geometric_trial_01/experiment_manifest.json",
+      "wind_y0_geometric_trial_02/experiment_manifest.json",
+      "wind_y0_geometric_trial_03/experiment_manifest.json",
+      "wind_y0_geometric_trial_04/experiment_manifest.json",
+      "wind_y0_geometric_trial_05/experiment_manifest.json",
+      "wind_y10_baseline_trial_01/experiment_manifest.json",
+      "wind_y10_baseline_trial_02/experiment_manifest.json",
+      "wind_y10_baseline_trial_03/experiment_manifest.json",
+      "wind_y10_baseline_trial_04/experiment_manifest.json",
+      "wind_y10_baseline_trial_05/experiment_manifest.json",
+      "wind_y10_geometric_trial_01/experiment_manifest.json",
+      "wind_y10_geometric_trial_02/experiment_manifest.json",
+      "wind_y10_geometric_trial_03/experiment_manifest.json",
+      "wind_y10_geometric_trial_04/experiment_manifest.json",
+      "wind_y10_geometric_trial_05/experiment_manifest.json",
+      "wind_y5_baseline_trial_01/experiment_manifest.json",
+      "wind_y5_baseline_trial_02/experiment_manifest.json",
+      "wind_y5_baseline_trial_03/experiment_manifest.json",
+      "wind_y5_baseline_trial_04/experiment_manifest.json",
+      "wind_y5_baseline_trial_05/experiment_manifest.json",
+      "wind_y5_geometric_trial_01/experiment_manifest.json",
+      "wind_y5_geometric_trial_02/experiment_manifest.json",
+      "wind_y5_geometric_trial_03/experiment_manifest.json",
+      "wind_y5_geometric_trial_04/experiment_manifest.json",
+      "wind_y5_geometric_trial_05/experiment_manifest.json"
+    ],
+    "run_order_json": "run_order.json",
+    "trial_metrics_csv": "crosswind_trial_metrics.csv",
+    "aggregate_metrics_csv": "crosswind_aggregate_metrics.csv",
+    "statistical_comparison_csv": "crosswind_statistical_comparison.csv",
+    "summary_markdown": "FROZEN_CROSSWIND_VALIDATION_SUMMARY.md"
+  },
+  "result": {
+    "total_trials": 30,
+    "valid_tracking_trials": 30,
+    "valid_swing_trials": 30
+  }
+}

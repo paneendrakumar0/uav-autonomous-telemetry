@@ -6,6 +6,8 @@
 #include <px4_msgs/msg/vehicle_local_position.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include "uav_control/geometric_control_utils.hpp"
+
 #include <array>
 #include <chrono>
 #include <cmath>
@@ -18,12 +20,7 @@ namespace
 {
 constexpr double kGravity = 9.80665;
 
-struct Vec3
-{
-	double x{0.0};
-	double y{0.0};
-	double z{0.0};
-};
+using Vec3 = uav_control::Vector3;
 
 struct Quat
 {
@@ -139,6 +136,12 @@ public:
 		kp_z_ = declare_parameter<double>("kp_z", 2.2);
 		kd_xy_ = declare_parameter<double>("kd_xy", 1.1);
 		kd_z_ = declare_parameter<double>("kd_z", 1.4);
+		ki_xy_ = declare_parameter<double>("ki_xy", 0.0);
+		ki_z_ = declare_parameter<double>("ki_z", 0.0);
+		integral_limit_xy_ = declare_parameter<double>("integral_limit_xy", 5.0);
+		integral_limit_z_ = declare_parameter<double>("integral_limit_z", 2.0);
+		integrator_leak_rate_ = declare_parameter<double>("integrator_leak_rate", 0.02);
+		max_tilt_deg_ = declare_parameter<double>("max_tilt_deg", 35.0);
 		hover_thrust_ = declare_parameter<double>("hover_thrust", 0.72);
 		min_thrust_ = declare_parameter<double>("min_thrust", 0.15);
 		max_thrust_ = declare_parameter<double>("max_thrust", 0.90);
@@ -191,6 +194,7 @@ private:
 	rclcpp::Time start_time_;
 	Vec3 position_{};
 	Vec3 velocity_{};
+	Vec3 position_error_integral_{};
 	bool have_position_{false};
 	double amplitude_{5.0};
 	double omega_{0.25};
@@ -199,6 +203,12 @@ private:
 	double kp_z_{2.2};
 	double kd_xy_{1.1};
 	double kd_z_{1.4};
+	double ki_xy_{0.0};
+	double ki_z_{0.0};
+	double integral_limit_xy_{5.0};
+	double integral_limit_z_{2.0};
+	double integrator_leak_rate_{0.02};
+	double max_tilt_deg_{35.0};
 	double hover_thrust_{0.72};
 	double min_thrust_{0.15};
 	double max_thrust_{0.90};
@@ -209,6 +219,7 @@ private:
 	bool armed_{false};
 	bool offboard_{false};
 	bool command_confirmed_{false};
+	bool control_saturated_{false};
 
 	uint64_t timestamp_us() const
 	{
@@ -307,7 +318,7 @@ private:
 		trajectory_reference_pub_->publish(msg);
 	}
 
-	void publish_attitude_setpoint(const Vec3 & xd, const Vec3 & vd, const Vec3 & ad)
+	void publish_attitude_setpoint(const Vec3 & xd, const Vec3 & vd, const Vec3 & ad, double t)
 	{
 		if (!have_position_) {
 			return;
@@ -315,11 +326,20 @@ private:
 
 		const Vec3 e_p = position_ - xd;
 		const Vec3 e_v = velocity_ - vd;
-		const Vec3 a_cmd = {
-			ad.x - kp_xy_ * e_p.x - kd_xy_ * e_v.x,
-			ad.y - kp_xy_ * e_p.y - kd_xy_ * e_v.y,
-			ad.z - kp_z_ * e_p.z - kd_z_ * e_v.z,
+		const bool integration_enabled = command_confirmed_ && t >= takeoff_ramp_s_ && !control_saturated_;
+		position_error_integral_ = uav_control::update_bounded_integral(
+			position_error_integral_, e_p, 0.02, integrator_leak_rate_,
+			integral_limit_xy_, integral_limit_z_, integration_enabled);
+
+		const Vec3 unconstrained_acceleration = {
+			ad.x - kp_xy_ * e_p.x - kd_xy_ * e_v.x - ki_xy_ * position_error_integral_.x,
+			ad.y - kp_xy_ * e_p.y - kd_xy_ * e_v.y - ki_xy_ * position_error_integral_.y,
+			ad.z - kp_z_ * e_p.z - kd_z_ * e_v.z - ki_z_ * position_error_integral_.z,
 		};
+		bool tilt_saturated = false;
+		const double max_tilt_rad = max_tilt_deg_ * std::acos(-1.0) / 180.0;
+		const Vec3 a_cmd = uav_control::apply_tilt_limit(
+			unconstrained_acceleration, kGravity, max_tilt_rad, tilt_saturated);
 
 		const Vec3 desired_body_z_down = normalized({-a_cmd.x, -a_cmd.y, kGravity - a_cmd.z}, {0.0, 0.0, 1.0});
 		const Vec3 yaw_reference = {1.0, 0.0, 0.0};
@@ -327,10 +347,10 @@ private:
 		const Vec3 body_x = normalized(cross(body_y, desired_body_z_down), {1.0, 0.0, 0.0});
 		const Quat q = rotation_matrix_to_quaternion(body_x, body_y, desired_body_z_down);
 
-		const double collective = clamp(
-			hover_thrust_ * norm({a_cmd.x, a_cmd.y, kGravity - a_cmd.z}) / kGravity,
-			min_thrust_,
-			max_thrust_);
+		const double raw_collective =
+			hover_thrust_ * norm({a_cmd.x, a_cmd.y, kGravity - a_cmd.z}) / kGravity;
+		const double collective = clamp(raw_collective, min_thrust_, max_thrust_);
+		control_saturated_ = tilt_saturated || raw_collective < min_thrust_ || raw_collective > max_thrust_;
 
 		px4_msgs::msg::VehicleAttitudeSetpoint msg{};
 		msg.q_d = {
@@ -355,7 +375,7 @@ private:
 
 		publish_offboard_control_mode();
 		publish_reference(xd, vd);
-		publish_attitude_setpoint(xd, vd, ad);
+		publish_attitude_setpoint(xd, vd, ad, t);
 
 		if (!command_confirmed_ && setpoint_counter_ >= arm_after_setpoints_ &&
 			setpoint_counter_ % 50 == 0)
