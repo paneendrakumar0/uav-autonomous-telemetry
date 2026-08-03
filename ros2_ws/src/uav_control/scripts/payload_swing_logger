@@ -83,6 +83,12 @@ class PayloadSwingLogger(Node):
             history=HistoryPolicy.KEEP_LAST,
             depth=1,
         )
+        controller_telemetry_qos = QoSProfile(
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            durability=DurabilityPolicy.VOLATILE,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=10,
+        )
         self.create_subscription(
             VehicleLocalPosition,
             "/fmu/out/vehicle_local_position",
@@ -114,13 +120,13 @@ class PayloadSwingLogger(Node):
             Vector3Stamped,
             disturbance_estimate_topic,
             self.disturbance_estimate_callback,
-            qos,
+            controller_telemetry_qos,
         )
         self.create_subscription(
             Vector3Stamped,
             payload_correction_topic,
             self.payload_correction_callback,
-            qos,
+            controller_telemetry_qos,
         )
 
         listen_ip = self.get_parameter("listen_ip").get_parameter_value().string_value
@@ -233,9 +239,11 @@ class PayloadSwingLogger(Node):
         cable_direction_ned = (math.nan, math.nan, math.nan)
         cable_direction_rate_ned = (math.nan, math.nan, math.nan)
         if pose_source == "gazebo_link_pair" and cable_length > 1e-6:
+            # Gazebo world vectors are ENU; PX4 local control uses NED.
+            # ENU (east, north, up) -> NED (north, east, down).
             cable_direction_ned = (
-                dx / cable_length,
                 dy / cable_length,
+                dx / cable_length,
                 -dz / cable_length,
             )
             self.publish_payload_state(cable_direction_ned, t_s)

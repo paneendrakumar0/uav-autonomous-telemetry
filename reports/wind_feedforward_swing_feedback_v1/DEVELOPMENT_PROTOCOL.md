@@ -11,7 +11,7 @@ This phase changes controller structure rather than retuning the rejected integr
 The geometric acceleration command is extended by two independently switchable terms:
 
 1. **Disturbance feed-forward:** low-pass the difference between measured horizontal acceleration and the previously applied acceleration command, bound the estimate, and subtract a gain-scaled estimate from the next command.
-2. **Payload-swing feedback:** derive the normalized cable direction and filtered direction rate from the calibrated Gazebo UAV/payload link pair, then command a bounded horizontal acceleration toward the displaced payload with rate damping.
+2. **Payload-swing feedback:** derive the normalized cable direction and filtered direction rate from the calibrated Gazebo UAV/payload link pair, transform Gazebo ENU vectors to PX4 local NED, then command a bounded horizontal acceleration toward the displaced payload with rate damping.
 
 Both terms have zero default gain. A stale payload-state timeout and the existing tilt/thrust saturation limits remain active. Estimated disturbance and payload correction are retained in raw telemetry.
 
