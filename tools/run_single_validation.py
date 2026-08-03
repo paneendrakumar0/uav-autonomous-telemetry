@@ -133,14 +133,14 @@ def write_experiment_manifest(out_dir, args, repo_root, px4_dir, summary):
             "dds_ready_timeout_s": getattr(args, "dds_ready_timeout_s", 30.0),
             "omega_rad_s": args.omega,
             "hover_thrust": args.hover_thrust,
-            "geometric_ki_xy": getattr(args, "geometric_ki_xy", 0.35),
-            "geometric_ki_z": getattr(args, "geometric_ki_z", 0.15),
+            "geometric_ki_xy": getattr(args, "geometric_ki_xy", 0.0),
+            "geometric_ki_z": getattr(args, "geometric_ki_z", 0.0),
             "geometric_integral_limit_xy": getattr(args, "geometric_integral_limit_xy", 5.0),
             "geometric_integral_limit_z": getattr(args, "geometric_integral_limit_z", 2.0),
             "geometric_integrator_leak_rate": getattr(args, "geometric_integrator_leak_rate", 0.02),
             "geometric_max_tilt_deg": getattr(args, "geometric_max_tilt_deg", 35.0),
             "geometric_kp_xy": getattr(args, "geometric_kp_xy", 1.4),
-            "geometric_kd_xy": getattr(args, "geometric_kd_xy", 1.3),
+            "geometric_kd_xy": getattr(args, "geometric_kd_xy", 1.1),
             "min_samples": args.min_samples,
             "max_abs_position_m": args.max_abs_position_m,
             "target_altitude_ned_m": args.target_altitude_ned,
@@ -230,14 +230,14 @@ def main():
     )
     parser.add_argument("--omega", type=float, default=0.25)
     parser.add_argument("--hover-thrust", type=float, default=0.72)
-    parser.add_argument("--geometric-ki-xy", type=float, default=0.35)
-    parser.add_argument("--geometric-ki-z", type=float, default=0.15)
+    parser.add_argument("--geometric-ki-xy", type=float, default=0.0)
+    parser.add_argument("--geometric-ki-z", type=float, default=0.0)
     parser.add_argument("--geometric-integral-limit-xy", type=float, default=5.0)
     parser.add_argument("--geometric-integral-limit-z", type=float, default=2.0)
     parser.add_argument("--geometric-integrator-leak-rate", type=float, default=0.02)
     parser.add_argument("--geometric-max-tilt-deg", type=float, default=35.0)
     parser.add_argument("--geometric-kp-xy", type=float, default=1.4)
-    parser.add_argument("--geometric-kd-xy", type=float, default=1.3)
+    parser.add_argument("--geometric-kd-xy", type=float, default=1.1)
     parser.add_argument("--min-samples", type=int, default=500)
     parser.add_argument("--max-abs-position-m", type=float, default=100.0)
     parser.add_argument("--target-altitude-ned", type=float, default=-5.0)

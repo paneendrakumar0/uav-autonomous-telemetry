@@ -134,10 +134,10 @@ public:
 		altitude_ned_ = declare_parameter<double>("altitude_ned", -5.0);
 		kp_xy_ = declare_parameter<double>("kp_xy", 1.4);
 		kp_z_ = declare_parameter<double>("kp_z", 2.2);
-		kd_xy_ = declare_parameter<double>("kd_xy", 1.3);
+		kd_xy_ = declare_parameter<double>("kd_xy", 1.1);
 		kd_z_ = declare_parameter<double>("kd_z", 1.4);
-		ki_xy_ = declare_parameter<double>("ki_xy", 0.35);
-		ki_z_ = declare_parameter<double>("ki_z", 0.15);
+		ki_xy_ = declare_parameter<double>("ki_xy", 0.0);
+		ki_z_ = declare_parameter<double>("ki_z", 0.0);
 		integral_limit_xy_ = declare_parameter<double>("integral_limit_xy", 5.0);
 		integral_limit_z_ = declare_parameter<double>("integral_limit_z", 2.0);
 		integrator_leak_rate_ = declare_parameter<double>("integrator_leak_rate", 0.02);
@@ -201,10 +201,10 @@ private:
 	double altitude_ned_{-5.0};
 	double kp_xy_{1.4};
 	double kp_z_{2.2};
-	double kd_xy_{1.3};
+	double kd_xy_{1.1};
 	double kd_z_{1.4};
-	double ki_xy_{0.35};
-	double ki_z_{0.15};
+	double ki_xy_{0.0};
+	double ki_z_{0.0};
 	double integral_limit_xy_{5.0};
 	double integral_limit_z_{2.0};
 	double integrator_leak_rate_{0.02};

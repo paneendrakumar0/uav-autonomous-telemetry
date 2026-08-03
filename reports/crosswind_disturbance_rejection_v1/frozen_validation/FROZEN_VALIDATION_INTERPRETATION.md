@@ -6,6 +6,8 @@ The frozen `ki_xy=0.35`, `kd_xy=1.3`, 35-degree-tilt candidate is **not accepted
 
 All 30 planned flights were completed with valid tracking and payload-swing telemetry. The candidate reduced payload cable angle at every tested wind speed, but it did not satisfy the predeclared rule that tracking must also improve.
 
+The bounded-integral mechanism remains available for research, but the merged controller defaults are deliberately conservative: `ki_xy=0`, `ki_z=0`, and `kd_xy=1.1`. The frozen-validation runner passes the rejected candidate gains explicitly so this experiment remains reproducible without enabling them for ordinary geometric-controller runs.
+
 ## Primary Results
 
 | Crosswind | Baseline mean 3D error | Candidate mean 3D error | Tracking result | Cable-angle improvement (95% bootstrap CI) |
