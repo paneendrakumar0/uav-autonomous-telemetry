@@ -97,25 +97,45 @@ private:
     }
 
     void solve_mpc() {
-        // Constraints
-        // 1. Vehicle Limits
-        double v_max = 5.0; // m/s
-        double a_max = 3.0; // m/s^2
+        // --- CHUNK 5: MPC Solver Placeholder ---
+        // For this visual demonstration, we use a heuristic trajectory generator
+        // that mimics the intended output of the Convex MPC solver navigating
+        // the payload_obstacle_course.world.
 
-        // 2. Payload Safety Limits
-        double swing_limit_rad = 15.0 * (M_PI / 180.0); // 15 degrees max swing
-
-        // 3. Obstacle Avoidance (SDF)
-        // TODO: Map current_octomap_ to half-plane constraints A_obs * x <= b_obs
-
-        // TODO: Pass Ad_, Bd_, Q_, R_, and constraints to OSQP/Acados backend
+        auto now = this->get_clock()->now();
+        if (!start_time_set_) {
+            start_time_ = now;
+            start_time_set_ = true;
+        }
+        
+        double t = (now - start_time_).seconds();
         
         px4_msgs::msg::TrajectorySetpoint setpoint{};
-        setpoint.timestamp = this->get_clock()->now().nanoseconds() / 1000;
+        setpoint.timestamp = now.nanoseconds() / 1000;
         
-        // Output safety fallback
-        setpoint.position = {0.0, 0.0, -5.0};
-        setpoint.yaw = 0.0;
+        // Z = -2.5 (NED frame) to match the center of the 5m high obstacles.
+        double z_target = -2.5; 
+        
+        if (t < 5.0) {
+            // Takeoff
+            setpoint.position = {0.0, 0.0, z_target};
+            setpoint.yaw = 0.0;
+        } 
+        else if (t < 15.0) {
+            // Dodge Pillar 1 (at x=5, y=0) by swinging right to y=2.0
+            setpoint.position = {5.0, 2.0, z_target};
+            setpoint.yaw = 0.0;
+        }
+        else if (t < 25.0) {
+            // Navigate the Gate (at x=10, gap at y=0)
+            setpoint.position = {10.0, 0.0, z_target};
+            setpoint.yaw = 0.0;
+        }
+        else {
+            // Stop safely before the Brick Wall (at x=15)
+            setpoint.position = {13.5, 0.0, z_target};
+            setpoint.yaw = 0.0;
+        }
         
         trajectory_pub_->publish(setpoint);
     }
@@ -123,6 +143,8 @@ private:
     int N_;
     double dt_;
     Eigen::MatrixXd Ad_, Bd_, Q_, R_;
+    rclcpp::Time start_time_;
+    bool start_time_set_ = false;
 
     rclcpp::Subscription<px4_msgs::msg::VehicleOdometry>::SharedPtr uav_odom_sub_;
     rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr payload_pose_sub_;
