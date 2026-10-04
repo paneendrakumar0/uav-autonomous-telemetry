@@ -1,42 +1,52 @@
 #!/usr/bin/env python3
+"""
+evaluate_reference_metrics.py
+Parses the flight trajectory CSV and evaluates whether the steady-state 
+mean 3D tracking error falls within the acceptable pass/fail tolerance.
+"""
+
 import sys
+import argparse
 import pandas as pd
 
-def evaluate_metrics(csv_path, max_error_threshold=0.50, steady_state_start=25.0):
-    """
-    Reads the tracking metrics CSV and evaluates whether the steady-state 
-    mean tracking error falls within the acceptable tolerance.
-    """
+def main():
+    parser = argparse.ArgumentParser(description="Evaluate UAV trajectory tracking metrics.")
+    parser.add_argument("--csv", required=True, help="Path to the metrics CSV file")
+    parser.add_argument("--threshold", type=float, default=0.50, help="Maximum allowed mean 3D error (m)")
+    parser.add_argument("--steady-start", type=float, default=25.0, help="Time (s) to begin steady-state evaluation")
+    args = parser.parse_args()
+
+    # ANSI color codes for terminal output
+    GREEN = '\033[0;32m'
+    RED = '\033[0;31m'
+    NC = '\033[0m'
+
     try:
-        df = pd.read_csv(csv_path)
+        df = pd.read_csv(args.csv)
     except FileNotFoundError:
-        print(f"[ERROR] Metrics file not found: {csv_path}")
-        return 1
+        print(f"{RED}[ERROR]{NC} Metrics file not found: {args.csv}")
+        sys.exit(1)
 
     if 't_s' not in df.columns or 'error_norm' not in df.columns:
-        print("[ERROR] CSV is missing required columns ('t_s', 'error_norm').")
-        return 1
+        print(f"{RED}[ERROR]{NC} CSV is missing required columns ('t_s', 'error_norm').")
+        sys.exit(1)
 
-    # Filter for steady-state data
-    steady_state_df = df[df['t_s'] >= steady_state_start]
+    # Isolate steady-state data
+    steady_state_df = df[df['t_s'] >= args.steady_start]
     
     if steady_state_df.empty:
-        print(f"[ERROR] No data recorded after t = {steady_state_start}s.")
-        return 1
+        print(f"{RED}[ERROR]{NC} No data recorded after t = {args.steady_start}s.")
+        sys.exit(1)
 
     mean_error = steady_state_df['error_norm'].mean()
-    print(f"Post-{int(steady_state_start)}s Mean 3D Error: {mean_error:.3f} m")
+    print(f"Post-{int(args.steady_start)}s Mean 3D Error: {mean_error:.3f} m (Threshold: {args.threshold} m)\n")
 
-    if mean_error < max_error_threshold:
-        print(f"--> [PASS] Tracking error is within the {max_error_threshold} m tolerance.")
-        return 0
+    if mean_error < args.threshold:
+        print(f"  {GREEN}==> [PASS]{NC} Tracking error is within acceptable tolerance.")
+        sys.exit(0)
     else:
-        print(f"--> [FAIL] Tracking error exceeds the {max_error_threshold} m tolerance.")
-        return 1
+        print(f"  {RED}==> [FAIL]{NC} Tracking error exceeds the allowable threshold.")
+        sys.exit(1)
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python3 evaluate_reference_metrics.py <path_to_csv>")
-        sys.exit(1)
-    
-    sys.exit(evaluate_metrics(sys.argv[1]))
+    main()
