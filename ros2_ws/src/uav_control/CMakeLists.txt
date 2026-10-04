@@ -7,6 +7,8 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(px4_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(octomap_msgs REQUIRED)
 
 # The Flight Controller
 add_executable(offboard_control src/offboard_control.cpp)
@@ -33,6 +35,10 @@ ament_target_dependencies(telemetry_logger rclcpp px4_msgs)
 add_executable(figure8_metrics_logger src/figure8_metrics_logger.cpp)
 ament_target_dependencies(figure8_metrics_logger rclcpp px4_msgs)
 
+# MPC Trajectory Planner Scaffolding
+add_executable(mpc_trajectory_planner src/mpc_trajectory_planner.cpp)
+ament_target_dependencies(mpc_trajectory_planner rclcpp px4_msgs geometry_msgs octomap_msgs)
+
 install(TARGETS
   offboard_control
   figure8_offboard
@@ -40,6 +46,7 @@ install(TARGETS
   geometric_figure8_attitude
   telemetry_logger
   figure8_metrics_logger
+  mpc_trajectory_planner
   DESTINATION lib/${PROJECT_NAME}
 )
 
