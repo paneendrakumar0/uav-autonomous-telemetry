@@ -1,0 +1,33 @@
+{
+  "name": "UAV Slung-Payload SITL",
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "context": ".."
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
+        "ms-python.python",
+        "ms-iot.vscode-ros",
+        "redhat.vscode-xml",
+        "ms-vscode.cpptools-extension-pack"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "C_Cpp.default.intelliSenseMode": "linux-gcc-x64",
+        "cmake.configureOnOpen": false
+      }
+    }
+  },
+  "postCreateCommand": "cd /root/ros2_ws && source /opt/ros/humble/setup.bash && source /root/px4_msgs_ws/install/setup.bash && colcon build --packages-select uav_control",
+  "remoteUser": "root",
+  "runArgs": [
+    "--network=host"
+  ],
+  "containerEnv": {
+    "DISPLAY": "${localEnv:DISPLAY}",
+    "PX4_HOME": "/root/PX4-Autopilot"
+  }
+}

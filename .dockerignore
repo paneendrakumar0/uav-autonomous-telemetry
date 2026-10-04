@@ -1,0 +1,28 @@
+# Version control
+.git
+.github
+
+# Python virtual environment
+.venv
+
+# Experiment reports (large, not needed in container)
+reports/
+
+# Build artifacts (will be built fresh inside container)
+ros2_ws/build/
+ros2_ws/install/
+ros2_ws/log/
+
+# Editor and IDE
+.vscode
+.idea
+.devcontainer
+
+# Compiled Python
+__pycache__/
+*.py[cod]
+
+# PX4 / Gazebo runtime logs
+*.ulg
+*.bag
+*.db3
