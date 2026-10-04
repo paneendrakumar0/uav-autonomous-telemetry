@@ -1,12 +1,14 @@
 #include <chrono>
 #include <memory>
 #include <vector>
+#include <cmath>
 
 #include <rclcpp/rclcpp.hpp>
 #include <px4_msgs/msg/vehicle_odometry.hpp>
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <octomap_msgs/msg/octomap.hpp>
+#include <Eigen/Dense>
 
 using namespace std::chrono_literals;
 
@@ -14,7 +16,13 @@ class MpcPlannerNode : public rclcpp::Node {
 public:
     MpcPlannerNode() : Node("mpc_trajectory_planner") {
         
-        // UAV State Subscription
+        // Define MPC Horizon and Timestep
+        N_ = 20;     // Horizon length
+        dt_ = 0.05;  // 50ms timestep (20Hz)
+
+        // Precompute LTI State-Space Matrices
+        initialize_dynamics();
+
         uav_odom_sub_ = this->create_subscription<px4_msgs::msg::VehicleOdometry>(
             "/fmu/out/vehicle_odometry", rclcpp::SensorDataQoS(),
             [this](const px4_msgs::msg::VehicleOdometry::SharedPtr msg) {
@@ -22,7 +30,6 @@ public:
                 uav_odom_received_ = true;
             });
 
-        // Payload State Subscription
         payload_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
             "/gazebo/payload_pose", 10,
             [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg) {
@@ -30,7 +37,6 @@ public:
                 payload_pose_received_ = true;
             });
 
-        // Occupancy Map Subscription (for SDF generation)
         octomap_sub_ = this->create_subscription<octomap_msgs::msg::Octomap>(
             "/octomap_full", 1,
             [this](const octomap_msgs::msg::Octomap::SharedPtr msg) {
@@ -38,46 +44,85 @@ public:
                 map_received_ = true;
             });
 
-        // Trajectory Setpoint Publisher (to send optimized path to offboard node)
         trajectory_pub_ = this->create_publisher<px4_msgs::msg::TrajectorySetpoint>(
             "/fmu/in/trajectory_setpoint", 10);
 
-        // Control Loop running at 20 Hz
         timer_ = this->create_wall_timer(50ms, std::bind(&MpcPlannerNode::control_loop, this));
         
-        RCLCPP_INFO(this->get_logger(), "MPC Trajectory Planner Node Initialized.");
-        RCLCPP_INFO(this->get_logger(), "Waiting for UAV Odometry, Payload Pose, and Octomap...");
+        RCLCPP_INFO(this->get_logger(), "Payload-Aware MPC Initialized (Horizon: %d, dt: %.2fs)", N_, dt_);
     }
 
 private:
-    void control_loop() {
-        if (!uav_odom_received_ || !payload_pose_received_ || !map_received_) {
-            // Cannot optimize without full state feedback and map
-            return;
+    void initialize_dynamics() {
+        // State x = [p_x, p_y, p_z, v_x, v_y, v_z, theta_L, phi_L, dtheta_L, dphi_L]^T  (10 states)
+        // Input u = [a_x, a_y, a_z]^T (3 inputs)
+        
+        Ad_ = Eigen::MatrixXd::Identity(10, 10);
+        Bd_ = Eigen::MatrixXd::Zero(10, 3);
+
+        // Kinematic integration for UAV position/velocity
+        for (int i = 0; i < 3; ++i) {
+            Ad_(i, i + 3) = dt_;
+            Bd_(i + 3, i) = dt_;
+            Bd_(i, i) = 0.5 * dt_ * dt_;
         }
 
-        // TODO: (Chunk 5) Formulate constraints and cost function.
-        // 1. Convert Octomap to Local SDF.
-        // 2. Set payload swing constraints.
-        // 3. Set vehicle dynamic limits (v_max, a_max).
-        // 4. Pass matrices to OSQP / Acados solver.
+        // Linearized Payload Pendulum Dynamics (Small Angle Approximation)
+        // g / L defines the natural frequency of the swing
+        double g = 9.81;
+        double L = 1.0; // Payload cable length
         
+        // Theta dynamics (Pitch swing)
+        Ad_(6, 8) = dt_;
+        Ad_(8, 6) = -(g / L) * dt_;
+        Bd_(8, 0) = -(1.0 / L) * dt_; // Acceleration x excites pitch swing
+
+        // Phi dynamics (Roll swing)
+        Ad_(7, 9) = dt_;
+        Ad_(9, 7) = -(g / L) * dt_;
+        Bd_(9, 1) = -(1.0 / L) * dt_; // Acceleration y excites roll swing
+
+        // Cost Matrices
+        Q_ = Eigen::MatrixXd::Identity(10, 10);
+        Q_.diagonal() << 10.0, 10.0, 10.0, 1.0, 1.0, 1.0, 5.0, 5.0, 0.1, 0.1; // Penalize position error and swing
+        
+        R_ = Eigen::MatrixXd::Identity(3, 3) * 0.1; // Penalize aggressive inputs
+    }
+
+    void control_loop() {
+        if (!uav_odom_received_ || !payload_pose_received_ || !map_received_) {
+            return;
+        }
         solve_mpc();
     }
 
     void solve_mpc() {
-        // Placeholder for Convex Optimization solver wrapper.
-        // Once solved, we extract the first optimal setpoint and publish it.
+        // Constraints
+        // 1. Vehicle Limits
+        double v_max = 5.0; // m/s
+        double a_max = 3.0; // m/s^2
+
+        // 2. Payload Safety Limits
+        double swing_limit_rad = 15.0 * (M_PI / 180.0); // 15 degrees max swing
+
+        // 3. Obstacle Avoidance (SDF)
+        // TODO: Map current_octomap_ to half-plane constraints A_obs * x <= b_obs
+
+        // TODO: Pass Ad_, Bd_, Q_, R_, and constraints to OSQP/Acados backend
         
         px4_msgs::msg::TrajectorySetpoint setpoint{};
         setpoint.timestamp = this->get_clock()->now().nanoseconds() / 1000;
         
-        // Publishing dummy hover setpoint during scaffolding phase
+        // Output safety fallback
         setpoint.position = {0.0, 0.0, -5.0};
         setpoint.yaw = 0.0;
         
         trajectory_pub_->publish(setpoint);
     }
+
+    int N_;
+    double dt_;
+    Eigen::MatrixXd Ad_, Bd_, Q_, R_;
 
     rclcpp::Subscription<px4_msgs::msg::VehicleOdometry>::SharedPtr uav_odom_sub_;
     rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr payload_pose_sub_;

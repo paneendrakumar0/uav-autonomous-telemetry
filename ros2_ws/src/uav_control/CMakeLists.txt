@@ -9,6 +9,7 @@ find_package(rclcpp REQUIRED)
 find_package(px4_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(octomap_msgs REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 # The Flight Controller
 add_executable(offboard_control src/offboard_control.cpp)
@@ -38,6 +39,7 @@ ament_target_dependencies(figure8_metrics_logger rclcpp px4_msgs)
 # MPC Trajectory Planner Scaffolding
 add_executable(mpc_trajectory_planner src/mpc_trajectory_planner.cpp)
 ament_target_dependencies(mpc_trajectory_planner rclcpp px4_msgs geometry_msgs octomap_msgs)
+target_include_directories(mpc_trajectory_planner PUBLIC ${EIGEN3_INCLUDE_DIRS})
 
 install(TARGETS
   offboard_control
