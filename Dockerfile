@@ -112,6 +112,9 @@ RUN PX4=/root/PX4-Autopilot && \
     mkdir -p "${PX4}/Tools/simulation/gazebo-classic/sitl_gazebo-classic/models/iris_depth_payload" && \
     cp /root/px4_payload_integration/Tools/simulation/gazebo-classic/sitl_gazebo-classic/models/iris_depth_payload/* \
        "${PX4}/Tools/simulation/gazebo-classic/sitl_gazebo-classic/models/iris_depth_payload/" && \
+    mkdir -p "${PX4}/Tools/simulation/gazebo-classic/sitl_gazebo-classic/models/ros2_depth_camera" && \
+    cp /root/px4_payload_integration/Tools/simulation/gazebo-classic/sitl_gazebo-classic/models/ros2_depth_camera/* \
+       "${PX4}/Tools/simulation/gazebo-classic/sitl_gazebo-classic/models/ros2_depth_camera/" && \
     cp /root/px4_payload_integration/Tools/simulation/gazebo-classic/sitl_gazebo-classic/worlds/*.world \
        "${PX4}/Tools/simulation/gazebo-classic/sitl_gazebo-classic/worlds/" 2>/dev/null || true && \
     cd "${PX4}" && make px4_sitl_default -j$(nproc)
