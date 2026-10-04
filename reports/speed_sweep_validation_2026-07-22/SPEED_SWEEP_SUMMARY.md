@@ -86,3 +86,19 @@ This is a controlled screening sweep, not a final statistical campaign. It reuse
 The main finding is speed dependence. At `omega=0.15 rad/s`, the PX4 baseline tracks better than the geometric controller and both controllers produce nearly identical swing. At `omega=0.20 rad/s`, the PX4 baseline still tracks better, but the geometric controller already reduces payload swing. At `omega=0.25 rad/s` and `omega=0.30 rad/s`, the geometric controller improves both trajectory tracking and payload swing.
 
 The crossover behavior suggests that the current geometric-controller gains are better suited to moderate and high trajectory rates than to slow Figure-8 motion. Slow-speed tuning should therefore be treated separately from high-speed payload-swing suppression.
+
+## Kinematic Aggressiveness
+
+To contextualize tracking degradation at higher speeds, the theoretical peak kinematic requirements for the Figure-8 trajectory (amplitude $A = 5.0\text{ m}$) scale with the rate parameter $\omega$:
+
+- **Maximum velocity:** $v_{max} = \sqrt{5} A \omega$
+- **Maximum acceleration:** $a_{max} = 4 A \omega^2$
+
+| $\omega$ (rad/s) | $v_{max}$ (m/s) | $a_{max}$ (m/s$^2$) |
+|---|---:|---:|
+| 0.15 | 1.68 | 0.45 |
+| 0.20 | 2.24 | 0.80 |
+| 0.25 | 2.80 | 1.25 |
+| 0.30 | 3.35 | 1.80 |
+
+These limits indicate that as frequency increases past $0.25\text{ rad/s}$, the combined velocity and acceleration demands may exceed the aggressive tracking capabilities of the baseline controller, while the geometric controller maintains better bandwidth.
