@@ -546,28 +546,53 @@ Result: the altitude bias is effectively solved without sacrificing the payload-
 
 ## Installation
 
+### Dependency Version Matrix
+
+To ensure exact reproducibility across machines, this project pins the following versions:
+
+| Component | Version / Commit | Notes |
+|---|---|---|
+| **ROS 2** | Humble Hawksbill | Standard desktop install on Ubuntu 22.04 |
+| **Gazebo** | Classic 11 | `libgazebo11-dev`, `ros-humble-gazebo-ros-pkgs` |
+| **PX4 Autopilot** | `v1.15.2` (Tag) | Pinned to maintain stable Gazebo Classic support |
+| **Micro XRCE-DDS Agent** | `v2.4.2` (Tag) | Middleware bridge for ROS 2 |
+| **px4_msgs** | `release/1.15` (Branch)| Must match the PX4 firmware version |
+
 ### 1. PX4 Autopilot
 
 ```bash
 cd ~
-git clone https://github.com/PX4/PX4-Autopilot.git --recursive
+git clone https://github.com/PX4/PX4-Autopilot.git --recursive --branch v1.15.2
 cd PX4-Autopilot
 bash ./Tools/setup/ubuntu.sh
-make px4_sitl_default -j2
+make px4_sitl_default -j$(nproc)
 ```
 
-### 2. PX4 ROS 2 Messages
+### 2. Micro XRCE-DDS Agent
+
+```bash
+cd ~
+git clone https://github.com/eProsima/Micro-XRCE-DDS-Agent.git --depth 1 --branch v2.4.2
+cd Micro-XRCE-DDS-Agent
+mkdir build && cd build
+cmake ..
+make -j$(nproc)
+sudo make install
+sudo ldconfig
+```
+
+### 3. PX4 ROS 2 Messages
 
 ```bash
 mkdir -p ~/px4_msgs_ws/src
-git clone https://github.com/PX4/px4_msgs.git ~/px4_msgs_ws/src/px4_msgs
+git clone https://github.com/PX4/px4_msgs.git --depth 1 --branch release/1.15 ~/px4_msgs_ws/src/px4_msgs
 cd ~/px4_msgs_ws
 source /opt/ros/humble/setup.zsh
 colcon build --packages-select px4_msgs --symlink-install
 source install/setup.zsh
 ```
 
-### 3. ROS 2 Workspace
+### 4. ROS 2 Workspace
 
 ```bash
 mkdir -p ~/ros2_ws/src
@@ -578,14 +603,6 @@ source ~/px4_msgs_ws/install/setup.zsh
 colcon build --packages-select uav_control
 source install/setup.zsh
 ```
-
-### 4. Micro XRCE-DDS Agent
-
-```bash
-MicroXRCEAgent udp4 -p 8888
-```
-
-If the command is missing, install/build the agent from eProsima's Micro-XRCE-DDS-Agent repository.
 
 ## Applying the PX4 Payload Integration Files
 

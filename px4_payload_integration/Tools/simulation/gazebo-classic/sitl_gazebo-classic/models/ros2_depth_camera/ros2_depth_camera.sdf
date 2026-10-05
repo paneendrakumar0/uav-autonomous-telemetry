@@ -1,0 +1,63 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <model name="ros2_depth_camera">
+    <link name="link">
+      <pose>0 0 0.015 0 0 0</pose>
+      <inertial>
+        <mass>0.01</mass>
+        <inertia>
+          <ixx>0.0001</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.0001</iyy>
+          <iyz>0</iyz>
+          <izz>0.0001</izz>
+        </inertia>
+      </inertial>
+      <visual name="visual">
+        <geometry>
+          <box>
+            <size>0.01 0.04 0.04</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/DarkGrey</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <sensor name="camera" type="depth">
+        <pose>0 0 0 0 0 0</pose>
+        <camera>
+          <horizontal_fov>1.5</horizontal_fov>
+          <image>
+            <width>640</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.1</near>
+            <far>20.0</far>
+          </clip>
+        </camera>
+        <always_on>1</always_on>
+        <update_rate>15</update_rate>
+        <visualize>true</visualize>
+        <plugin name="camera_plugin" filename="libgazebo_ros_camera.so">
+          <ros>
+            <namespace>camera</namespace>
+            <remapping>custom_cam/image_raw:=color/image_raw</remapping>
+            <remapping>custom_cam/image_depth:=depth/image_raw</remapping>
+            <remapping>custom_cam/camera_info:=depth/camera_info</remapping>
+            <remapping>custom_cam/points:=depth/points</remapping>
+          </ros>
+          <camera_name>realsense</camera_name>
+          <frame_name>camera_link_optical</frame_name>
+          <min_depth>0.1</min_depth>
+          <max_depth>20.0</max_depth>
+        </plugin>
+      </sensor>
+    </link>
+  </model>
+</sdf>
