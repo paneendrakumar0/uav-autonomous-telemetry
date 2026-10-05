@@ -47,13 +47,16 @@ class SubprocessManager:
         subprocess.run("pkill -9 gzclient 2>/dev/null", shell=True)
         print("[GCS] Teardown complete. All processes killed.")
 
+from sensor_msgs.msg import Image
+from PyQt6.QtGui import QImage, QPixmap
+
 # ==============================================================================
-# Phase 1 & 3: ROS 2 Worker Thread
+# Phase 1, 3, & 4: ROS 2 Worker Thread
 # ==============================================================================
 class ROS2Worker(QThread):
-    """Runs rclpy.spin() in the background to prevent GUI freezing."""
     log_signal = pyqtSignal(str)
     telemetry_signal = pyqtSignal(float, float) # time, altitude
+    video_signal = pyqtSignal(QImage) # FPV video frame
 
     def __init__(self):
         super().__init__()
@@ -64,23 +67,39 @@ class ROS2Worker(QThread):
         rclpy.init()
         self.node = rclpy.create_node('gcs_telemetry_listener')
         
-        # Phase 3: Telemetry Subscriptions
+        # Telemetry Subscriptions
         self.odom_sub = self.node.create_subscription(
-            VehicleOdometry,
-            '/fmu/out/vehicle_odometry',
-            self.odom_callback,
-            10
+            VehicleOdometry, '/fmu/out/vehicle_odometry', self.odom_callback, 10
         )
         
-        self.log_signal.emit("ROS 2 Telemetry Node Initialized. Subscribed to Odometry.")
+        # Phase 4: Video Subscription
+        self.image_sub = self.node.create_subscription(
+            Image, '/camera/image_raw', self.image_callback, 10
+        )
+        
+        self.log_signal.emit("ROS 2 Telemetry Node Initialized. Subscribed to Odometry & Video.")
         rclpy.spin(self.node)
         
     def odom_callback(self, msg):
-        # PX4 uses NED frame, so -Z is Altitude (Up)
         t = time.time() - self.start_time
         alt = -msg.position[2]
         if math.isfinite(alt):
             self.telemetry_signal.emit(t, alt)
+
+    def image_callback(self, msg):
+        # Convert ROS Image to QImage
+        # Gazebo camera typically outputs rgb8
+        try:
+            q_img = QImage(
+                msg.data, 
+                msg.width, 
+                msg.height, 
+                msg.step, 
+                QImage.Format.Format_RGB888
+            ).copy() # Deep copy to avoid memory corruption across threads
+            self.video_signal.emit(q_img)
+        except Exception as e:
+            pass
 
     def stop(self):
         if self.node:
@@ -91,7 +110,7 @@ class ROS2Worker(QThread):
         self.wait()
 
 # ==============================================================================
-# Phase 1, 2 & 3: Main Ground Control Station Window
+# Phase 1-4: Main Ground Control Station Window
 # ==============================================================================
 class GroundControlStation(QMainWindow):
     def __init__(self):
@@ -100,34 +119,29 @@ class GroundControlStation(QMainWindow):
         self.resize(1000, 700)
 
         self.proc_manager = SubprocessManager()
-        
-        # Phase 3: Telemetry Data Buffers
         self.time_data = []
         self.alt_data = []
         
         self.init_ui()
 
-        # Start ROS 2 Worker Thread
         self.ros_worker = ROS2Worker()
         self.ros_worker.log_signal.connect(self.update_log)
         self.ros_worker.telemetry_signal.connect(self.update_telemetry)
+        self.ros_worker.video_signal.connect(self.update_video)
         self.ros_worker.start()
 
     def init_ui(self):
         main_widget = QWidget()
         self.setCentralWidget(main_widget)
-        
-        # Main Grid Layout
         grid = QGridLayout(main_widget)
         
-        # Header
         header = QLabel("GROUND CONTROL STATION - UAV SLUNG PAYLOAD")
         header.setFont(QFont("Arial", 14, QFont.Weight.Bold))
         header.setAlignment(Qt.AlignmentFlag.AlignCenter)
         header.setStyleSheet("color: #ecf0f1; background-color: #34495e; padding: 10px;")
         grid.addWidget(header, 0, 0, 1, 2)
 
-        # Panel 1: Mission Command Deck
+        # Panel 1: Mission Command
         cmd_group = QGroupBox("Mission Command Deck")
         cmd_group.setStyleSheet("QGroupBox { font-weight: bold; border: 1px solid #7f8c8d; margin-top: 10px; }")
         cmd_layout = QVBoxLayout()
@@ -141,7 +155,6 @@ class GroundControlStation(QMainWindow):
         cmd_layout.addWidget(QLabel("Select Flight Regime:"))
         cmd_layout.addWidget(self.mission_selector)
 
-        # Launch/Kill Matrix
         btn_layout = QHBoxLayout()
         self.btn_launch = QPushButton("🚀 LAUNCH SIMULATION")
         self.btn_launch.setStyleSheet("background-color: #27ae60; color: white; font-weight: bold; padding: 15px;")
@@ -157,12 +170,10 @@ class GroundControlStation(QMainWindow):
         cmd_group.setLayout(cmd_layout)
         grid.addWidget(cmd_group, 1, 0, 1, 2)
 
-        # Panel 2: Phase 3 Telemetry Oscilloscopes
+        # Panel 2: Telemetry
         self.telemetry_group = QGroupBox("Live Telemetry Stream: Drone Altitude")
         self.telemetry_group.setStyleSheet("QGroupBox { font-weight: bold; border: 1px solid #7f8c8d; margin-top: 10px; }")
         tel_layout = QVBoxLayout()
-        
-        # Setup PyQtGraph
         pg.setConfigOptions(antialias=True)
         self.plot_widget = pg.PlotWidget()
         self.plot_widget.setBackground('#1e1e1e')
@@ -170,16 +181,26 @@ class GroundControlStation(QMainWindow):
         self.plot_widget.setLabel('left', 'Altitude', units='meters')
         self.plot_widget.setLabel('bottom', 'Time', units='seconds')
         self.alt_curve = self.plot_widget.plot(pen=pg.mkPen('#00d2d3', width=3))
-        
         tel_layout.addWidget(self.plot_widget)
         self.telemetry_group.setLayout(tel_layout)
         grid.addWidget(self.telemetry_group, 2, 0, 1, 1)
 
-        # Panel 3: Perception Suite (Placeholder for Phase 4)
-        self.vision_group = QGroupBox("Perception Suite")
+        # Panel 3: Phase 4 Perception Suite
+        self.vision_group = QGroupBox("Perception Suite (Live FPV & Mapping)")
         self.vision_group.setStyleSheet("QGroupBox { font-weight: bold; border: 1px solid #7f8c8d; margin-top: 10px; }")
         vis_layout = QVBoxLayout()
-        vis_layout.addWidget(QLabel("[Phase 4: FPV Video & RViz 3D Map will dock here]"))
+        
+        self.video_label = QLabel("Waiting for Camera Feed...")
+        self.video_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.video_label.setStyleSheet("background-color: #000000; color: #ffffff;")
+        self.video_label.setMinimumSize(320, 240)
+        vis_layout.addWidget(self.video_label)
+        
+        self.btn_rviz = QPushButton("🗺️ Launch RViz2 (3D Pointcloud)")
+        self.btn_rviz.setStyleSheet("background-color: #2980b9; color: white; font-weight: bold; padding: 10px;")
+        self.btn_rviz.clicked.connect(lambda: self.proc_manager.launch("rviz2"))
+        vis_layout.addWidget(self.btn_rviz)
+        
         self.vision_group.setLayout(vis_layout)
         grid.addWidget(self.vision_group, 2, 1, 1, 1)
 
@@ -189,6 +210,12 @@ class GroundControlStation(QMainWindow):
         self.status_log.setAlignment(Qt.AlignmentFlag.AlignTop)
         grid.addWidget(self.status_log, 3, 0, 1, 2)
         grid.setRowStretch(3, 1)
+
+    def update_video(self, q_img):
+        """Called by ROS2Worker to render the live camera feed."""
+        pixmap = QPixmap.fromImage(q_img)
+        # Scale to fit label while maintaining aspect ratio
+        self.video_label.setPixmap(pixmap.scaled(self.video_label.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
 
     def update_telemetry(self, t, alt):
         """Called by ROS2Worker whenever a new odometry packet arrives."""
