@@ -82,7 +82,7 @@ RUN git clone --recursive --branch ${PX4_TAG} https://github.com/PX4/PX4-Autopil
 # ------------------------------------------------------------------------------
 # 3. Micro XRCE-DDS Agent (Pinned to v2.4.2)
 # ------------------------------------------------------------------------------
-ARG DDS_AGENT_TAG=v2.4.2
+ARG DDS_AGENT_TAG=master
 RUN git clone --depth 1 --branch ${DDS_AGENT_TAG} https://github.com/eProsima/Micro-XRCE-DDS-Agent.git && \
     cd Micro-XRCE-DDS-Agent && \
     mkdir build && cd build && \
