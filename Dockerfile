@@ -28,8 +28,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget gnupg lsb-
     ros-humble-octomap \
     ros-humble-octomap-msgs \
     ros-humble-octomap-server \
-    python3-pyqt6 \
-    python3-pyqtgraph \
     git \
     wget \
     curl \
@@ -66,6 +64,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget gnupg lsb-
     dmidecode \
     bc \
     && rm -rf /var/lib/apt/lists/*
+RUN pip3 install PyQt6 pyqtgraph
 
 RUN pip3 install --no-cache-dir kconfiglib pyros-genmsg pyulog
 
