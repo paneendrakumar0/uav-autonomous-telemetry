@@ -12,7 +12,7 @@ def generate_launch_description():
         # 1. Start the 3D Volumetric Mapping Node
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                os.path.join(uav_control_dir, 'octomap.launch.py')
+                os.path.join(uav_control_dir, 'launch', 'octomap.launch.py')
             )
         ),
         

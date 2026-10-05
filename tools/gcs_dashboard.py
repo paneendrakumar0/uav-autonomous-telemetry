@@ -236,7 +236,7 @@ class GroundControlStation(QMainWindow):
             self.update_log("❌ ERROR: No flight data to export yet.")
             return
             
-        reports_dir = os.path.expanduser("~/uav-autonomous-telemetry/reports")
+        reports_dir = "/workspaces/uav-autonomous-telemetry/reports"
         os.makedirs(reports_dir, exist_ok=True)
         
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -277,7 +277,7 @@ class GroundControlStation(QMainWindow):
         else:
             self.proc_manager.launch("HEADLESS=1 make px4_sitl gazebo-classic_iris_depth_payload__payload_obstacle_course", cwd=px4_dir)
             self.update_log("Gazebo Booting (Obstacle Course)...")
-            self.proc_manager.launch("source install/setup.bash && ros2 launch uav_control mpc_obstacle_avoidance.launch.py", cwd=os.path.expanduser("~/uav-autonomous-telemetry/ros2_ws"))
+            self.proc_manager.launch("source install/setup.bash && ros2 launch uav_control mpc_obstacle_avoidance.launch.py", cwd="/workspaces/uav-autonomous-telemetry/ros2_ws")
             
         self.update_log("SIMULATION ACTIVE.")
 
