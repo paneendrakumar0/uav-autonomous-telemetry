@@ -18,12 +18,12 @@ SHELL ["/bin/bash", "-c"]
 # ------------------------------------------------------------------------------
 # 1. System Dependencies & Gazebo Classic 11
 # ------------------------------------------------------------------------------
-RUN apt-get update && apt-get install -y --no-install-recommends wget gnupg lsb-release && \ 
-    wget https://packages.osrfoundation.org/gazebo.gpg -O /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg && \ 
-    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable jammy main" | tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null && \ 
+RUN apt-get update && apt-get install -y --no-install-recommends wget gnupg lsb-release && \
+    wget https://packages.osrfoundation.org/gazebo.gpg -O /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg && \
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable jammy main" | tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null && \
     apt-get update && apt-get install -y --no-install-recommends \
     gazebo \
-    libgazebo11-dev \
+    libgazebo-dev \
     ros-humble-gazebo-ros-pkgs \
     ros-humble-octomap \
     ros-humble-octomap-msgs \
