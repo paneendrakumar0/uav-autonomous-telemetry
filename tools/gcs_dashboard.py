@@ -95,20 +95,39 @@ class GroundControlStation(QMainWindow):
         self.ros_worker.log_signal.connect(self.update_log)
         self.ros_worker.start()
 
+from PyQt6.QtWidgets import QComboBox, QGroupBox, QGridLayout
+
+# ... (imports handled by the file already, just redefining the class methods)
     def init_ui(self):
         main_widget = QWidget()
         self.setCentralWidget(main_widget)
-        layout = QVBoxLayout(main_widget)
-
-        # Header
-        header = QLabel("MISSION DASHBOARD (V1.0 Scaffolding)")
-        header.setFont(QFont("Arial", 16, QFont.Weight.Bold))
-        header.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(header)
-
-        # Control Buttons
-        btn_layout = QHBoxLayout()
         
+        # Main Grid Layout
+        grid = QGridLayout(main_widget)
+        
+        # Header
+        header = QLabel("GROUND CONTROL STATION - UAV SLUNG PAYLOAD")
+        header.setFont(QFont("Arial", 14, QFont.Weight.Bold))
+        header.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        header.setStyleSheet("color: #ecf0f1; background-color: #34495e; padding: 10px;")
+        grid.addWidget(header, 0, 0, 1, 2)
+
+        # Panel 1: Mission Command Deck
+        cmd_group = QGroupBox("Mission Command Deck")
+        cmd_group.setStyleSheet("QGroupBox { font-weight: bold; border: 1px solid #7f8c8d; margin-top: 10px; } QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 3px 0 3px; }")
+        cmd_layout = QVBoxLayout()
+
+        self.mission_selector = QComboBox()
+        self.mission_selector.addItems([
+            "Phase 1: Figure-8 Baseline (Empty World)",
+            "Phase 2: MPC Obstacle Avoidance (Cluttered World)"
+        ])
+        self.mission_selector.setStyleSheet("padding: 5px; font-size: 14px;")
+        cmd_layout.addWidget(QLabel("Select Flight Regime:"))
+        cmd_layout.addWidget(self.mission_selector)
+
+        # Launch/Kill Matrix
+        btn_layout = QHBoxLayout()
         self.btn_launch = QPushButton("🚀 LAUNCH SIMULATION")
         self.btn_launch.setStyleSheet("background-color: #27ae60; color: white; font-weight: bold; padding: 15px;")
         self.btn_launch.clicked.connect(self.launch_sim)
@@ -116,40 +135,68 @@ class GroundControlStation(QMainWindow):
         self.btn_kill = QPushButton("🛑 ABORT / KILL ALL")
         self.btn_kill.setStyleSheet("background-color: #c0392b; color: white; font-weight: bold; padding: 15px;")
         self.btn_kill.clicked.connect(self.kill_sim)
-
+        
         btn_layout.addWidget(self.btn_launch)
         btn_layout.addWidget(self.btn_kill)
-        layout.addLayout(btn_layout)
+        cmd_layout.addLayout(btn_layout)
+        cmd_group.setLayout(cmd_layout)
+        grid.addWidget(cmd_group, 1, 0, 1, 2)
+
+        # Panel 2: Telemetry Oscilloscopes (Placeholder for Phase 3)
+        self.telemetry_group = QGroupBox("Live Telemetry Stream")
+        self.telemetry_group.setStyleSheet("QGroupBox { font-weight: bold; border: 1px solid #7f8c8d; margin-top: 10px; }")
+        tel_layout = QVBoxLayout()
+        tel_layout.addWidget(QLabel("[Phase 3: PyQtGraph Oscilloscopes will dock here]"))
+        self.telemetry_group.setLayout(tel_layout)
+        grid.addWidget(self.telemetry_group, 2, 0, 1, 1)
+
+        # Panel 3: Perception Suite (Placeholder for Phase 4)
+        self.vision_group = QGroupBox("Perception Suite")
+        self.vision_group.setStyleSheet("QGroupBox { font-weight: bold; border: 1px solid #7f8c8d; margin-top: 10px; }")
+        vis_layout = QVBoxLayout()
+        vis_layout.addWidget(QLabel("[Phase 4: FPV Video & RViz 3D Map will dock here]"))
+        self.vision_group.setLayout(vis_layout)
+        grid.addWidget(self.vision_group, 2, 1, 1, 1)
 
         # Status Log
-        self.status_log = QLabel("System Ready. Awaiting Command...")
+        self.status_log = QLabel("System Ready. Select a mission and Launch...")
         self.status_log.setStyleSheet("background-color: #2c3e50; color: #ecf0f1; padding: 10px; font-family: monospace;")
         self.status_log.setAlignment(Qt.AlignmentFlag.AlignTop)
-        layout.addWidget(self.status_log)
+        grid.addWidget(self.status_log, 3, 0, 1, 2)
+        grid.setRowStretch(3, 1) # Allow log to expand
 
     def launch_sim(self):
-        self.update_log("Launching MicroXRCEAgent & Gazebo Simulator...")
+        mission = self.mission_selector.currentText()
+        self.update_log(f"Initializing Sequence for: {mission}")
         
-        # Paths based on standard setup
-        workspace_dir = os.path.expanduser("~/uav-autonomous-telemetry")
-        px4_dir = os.path.expanduser("~/PX4-Autopilot") # Assumes native or docker mount
+        px4_dir = os.path.expanduser("~/PX4-Autopilot")
         
-        # Start the Agent
+        # 1. Start XRCE Bridge
         self.proc_manager.launch("MicroXRCEAgent udp4 -p 8888")
         
-        # Start Gazebo and PX4 (We use headless in Phase 1 testing to save GPU)
-        self.proc_manager.launch(f"HEADLESS=1 make px4_sitl gazebo-classic_iris_depth_payload__payload_obstacle_course", cwd=px4_dir)
-        
-        self.update_log("Simulation Launch Initiated. Allow 10 seconds for Gazebo to boot.")
+        # 2. Start specific environment based on Mission Selector
+        if "Phase 1" in mission:
+            self.proc_manager.launch("HEADLESS=1 make px4_sitl gazebo-classic_iris_depth_camera", cwd=px4_dir)
+            self.update_log("Gazebo Booting (Empty World)...")
+            self.update_log("Run 'ros2 launch uav_control figure8_experiment.launch.py' manually for now.")
+        else:
+            self.proc_manager.launch("HEADLESS=1 make px4_sitl gazebo-classic_iris_depth_payload__payload_obstacle_course", cwd=px4_dir)
+            self.update_log("Gazebo Booting (Obstacle Course)...")
+            # In Phase 6 we built the master launch file for MPC
+            self.proc_manager.launch("source install/setup.bash && ros2 launch uav_control mpc_obstacle_avoidance.launch.py", cwd=os.path.expanduser("~/uav-autonomous-telemetry/ros2_ws"))
+            
+        self.update_log("SIMULATION ACTIVE.")
 
     def kill_sim(self):
         self.update_log("ABORT COMMAND RECEIVED. Tearing down simulation...")
         self.proc_manager.kill_all()
-        self.update_log("Simulation safely terminated. All processes killed.")
+        self.update_log("Simulation safely terminated.")
 
     def update_log(self, msg):
         current = self.status_log.text()
-        self.status_log.setText(f"{msg}\n{current}")
+        # Keep log from getting infinitely long
+        lines = current.split('\n')[:15]
+        self.status_log.setText(f"> {msg}\n" + '\n'.join(lines))
 
     def closeEvent(self, event):
         """Ensures clean teardown when the X button is clicked."""
