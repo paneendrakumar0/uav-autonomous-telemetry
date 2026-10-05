@@ -20,8 +20,13 @@ SHELL ["/bin/bash", "-c"]
 # ------------------------------------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gazebo \
-    libgazebo11-dev \
+    libgazebo-dev \
     ros-humble-gazebo-ros-pkgs \
+    ros-humble-octomap \
+    ros-humble-octomap-msgs \
+    ros-humble-octomap-server \
+    python3-pyqt6 \
+    python3-pyqtgraph \
     git \
     wget \
     curl \
