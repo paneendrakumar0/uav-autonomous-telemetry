@@ -5,22 +5,24 @@ import signal
 import subprocess
 import time
 import math
+import csv
+from datetime import datetime
+
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QLabel, QHBoxLayout, QComboBox, QGroupBox, QGridLayout
 from PyQt6.QtCore import QThread, pyqtSignal, Qt
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QFont, QImage, QPixmap
 
-# Pyqtgraph for telemetry
 import pyqtgraph as pg
 
 import rclpy
 from rclpy.node import Node
 from px4_msgs.msg import VehicleOdometry
+from sensor_msgs.msg import Image
 
 # ==============================================================================
 # Phase 1: Subprocess Manager (The Execution Engine)
 # ==============================================================================
 class SubprocessManager:
-    """Safely spins up and tears down bash commands and background processes."""
     def __init__(self):
         self.processes = []
 
@@ -47,11 +49,8 @@ class SubprocessManager:
         subprocess.run("pkill -9 gzclient 2>/dev/null", shell=True)
         print("[GCS] Teardown complete. All processes killed.")
 
-from sensor_msgs.msg import Image
-from PyQt6.QtGui import QImage, QPixmap
-
 # ==============================================================================
-# Phase 1, 3, & 4: ROS 2 Worker Thread
+# Phase 1, 3, 4: ROS 2 Worker Thread
 # ==============================================================================
 class ROS2Worker(QThread):
     log_signal = pyqtSignal(str)
@@ -67,12 +66,10 @@ class ROS2Worker(QThread):
         rclpy.init()
         self.node = rclpy.create_node('gcs_telemetry_listener')
         
-        # Telemetry Subscriptions
         self.odom_sub = self.node.create_subscription(
             VehicleOdometry, '/fmu/out/vehicle_odometry', self.odom_callback, 10
         )
         
-        # Phase 4: Video Subscription
         self.image_sub = self.node.create_subscription(
             Image, '/camera/image_raw', self.image_callback, 10
         )
@@ -87,8 +84,6 @@ class ROS2Worker(QThread):
             self.telemetry_signal.emit(t, alt)
 
     def image_callback(self, msg):
-        # Convert ROS Image to QImage
-        # Gazebo camera typically outputs rgb8
         try:
             q_img = QImage(
                 msg.data, 
@@ -96,7 +91,7 @@ class ROS2Worker(QThread):
                 msg.height, 
                 msg.step, 
                 QImage.Format.Format_RGB888
-            ).copy() # Deep copy to avoid memory corruption across threads
+            ).copy()
             self.video_signal.emit(q_img)
         except Exception as e:
             pass
@@ -110,13 +105,13 @@ class ROS2Worker(QThread):
         self.wait()
 
 # ==============================================================================
-# Phase 1-4: Main Ground Control Station Window
+# Phase 1-5: Main Ground Control Station Window
 # ==============================================================================
 class GroundControlStation(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("UAV Autonomous Telemetry - Ground Control Station")
-        self.resize(1000, 700)
+        self.resize(1100, 800)
 
         self.proc_manager = SubprocessManager()
         self.time_data = []
@@ -141,7 +136,7 @@ class GroundControlStation(QMainWindow):
         header.setStyleSheet("color: #ecf0f1; background-color: #34495e; padding: 10px;")
         grid.addWidget(header, 0, 0, 1, 2)
 
-        # Panel 1: Mission Command
+        # Panel 1a: Mission Command Deck
         cmd_group = QGroupBox("Mission Command Deck")
         cmd_group.setStyleSheet("QGroupBox { font-weight: bold; border: 1px solid #7f8c8d; margin-top: 10px; }")
         cmd_layout = QVBoxLayout()
@@ -168,7 +163,25 @@ class GroundControlStation(QMainWindow):
         btn_layout.addWidget(self.btn_kill)
         cmd_layout.addLayout(btn_layout)
         cmd_group.setLayout(cmd_layout)
-        grid.addWidget(cmd_group, 1, 0, 1, 2)
+        grid.addWidget(cmd_group, 1, 0, 1, 1)
+
+        # Panel 1b: Phase 5 Chaos & Analytics
+        chaos_group = QGroupBox("Chaos Injection & Analytics")
+        chaos_group.setStyleSheet("QGroupBox { font-weight: bold; border: 1px solid #7f8c8d; margin-top: 10px; }")
+        chaos_layout = QVBoxLayout()
+        
+        self.btn_wind = QPushButton("🌪️ INJECT 5m/s CROSSWIND")
+        self.btn_wind.setStyleSheet("background-color: #e67e22; color: white; font-weight: bold; padding: 15px;")
+        self.btn_wind.clicked.connect(self.inject_wind)
+        
+        self.btn_report = QPushButton("📊 EXPORT FLIGHT REPORT (CSV)")
+        self.btn_report.setStyleSheet("background-color: #8e44ad; color: white; font-weight: bold; padding: 15px;")
+        self.btn_report.clicked.connect(self.export_report)
+        
+        chaos_layout.addWidget(self.btn_wind)
+        chaos_layout.addWidget(self.btn_report)
+        chaos_group.setLayout(chaos_layout)
+        grid.addWidget(chaos_group, 1, 1, 1, 1)
 
         # Panel 2: Telemetry
         self.telemetry_group = QGroupBox("Live Telemetry Stream: Drone Altitude")
@@ -185,7 +198,7 @@ class GroundControlStation(QMainWindow):
         self.telemetry_group.setLayout(tel_layout)
         grid.addWidget(self.telemetry_group, 2, 0, 1, 1)
 
-        # Panel 3: Phase 4 Perception Suite
+        # Panel 3: Perception Suite
         self.vision_group = QGroupBox("Perception Suite (Live FPV & Mapping)")
         self.vision_group.setStyleSheet("QGroupBox { font-weight: bold; border: 1px solid #7f8c8d; margin-top: 10px; }")
         vis_layout = QVBoxLayout()
@@ -211,22 +224,44 @@ class GroundControlStation(QMainWindow):
         grid.addWidget(self.status_log, 3, 0, 1, 2)
         grid.setRowStretch(3, 1)
 
+    def inject_wind(self):
+        """Phase 5: Simulates a wind gust in Gazebo."""
+        self.update_log("⚠️ CHAOS INJECTION: Firing 5m/s Crosswind Gust...")
+        cmd = "gz topic -p '/gazebo/default/wind' -m 'linear_velocity: {x: 0, y: 5.0, z: 0}'"
+        self.proc_manager.launch(cmd)
+
+    def export_report(self):
+        """Phase 5: Exports the live telemetry buffer to a CSV file."""
+        if not self.time_data:
+            self.update_log("❌ ERROR: No flight data to export yet.")
+            return
+            
+        reports_dir = os.path.expanduser("~/uav-autonomous-telemetry/reports")
+        os.makedirs(reports_dir, exist_ok=True)
+        
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filepath = os.path.join(reports_dir, f"gcs_flight_log_{timestamp}.csv")
+        
+        try:
+            with open(filepath, 'w', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow(['Time (s)', 'Altitude (m)'])
+                for t, alt in zip(self.time_data, self.alt_data):
+                    writer.writerow([t, alt])
+            self.update_log(f"✅ SUCCESS: Flight Report saved to {filepath}")
+        except Exception as e:
+            self.update_log(f"❌ ERROR: Failed to save report: {e}")
+
     def update_video(self, q_img):
-        """Called by ROS2Worker to render the live camera feed."""
         pixmap = QPixmap.fromImage(q_img)
-        # Scale to fit label while maintaining aspect ratio
         self.video_label.setPixmap(pixmap.scaled(self.video_label.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
 
     def update_telemetry(self, t, alt):
-        """Called by ROS2Worker whenever a new odometry packet arrives."""
         self.time_data.append(t)
         self.alt_data.append(alt)
-        
-        # Keep only the last 300 data points (scrolling window)
         if len(self.time_data) > 300:
             self.time_data.pop(0)
             self.alt_data.pop(0)
-            
         self.alt_curve.setData(self.time_data, self.alt_data)
 
     def launch_sim(self):
@@ -234,7 +269,6 @@ class GroundControlStation(QMainWindow):
         self.update_log(f"Initializing Sequence for: {mission}")
         px4_dir = os.path.expanduser("~/PX4-Autopilot")
         
-        # Start XRCE Bridge
         self.proc_manager.launch("MicroXRCEAgent udp4 -p 8888")
         
         if "Phase 1" in mission:
@@ -250,7 +284,6 @@ class GroundControlStation(QMainWindow):
     def kill_sim(self):
         self.update_log("ABORT COMMAND RECEIVED. Tearing down simulation...")
         self.proc_manager.kill_all()
-        # Reset graph data
         self.time_data.clear()
         self.alt_data.clear()
         self.alt_curve.setData([], [])
