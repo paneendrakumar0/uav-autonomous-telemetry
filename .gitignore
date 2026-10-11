@@ -23,3 +23,8 @@ reports/single_validation_*/logs/
 
 # Large local simulator binaries should not be added here
 QGroundControl*.AppImage
+
+# Simulation and test runtime logs
+*.log
+reports/reference_test/*.log
+px4_msgs/

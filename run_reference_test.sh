@@ -26,9 +26,9 @@ if [ ! -d "$PX4_DIR" ]; then
     exit 1
 fi
 cd "$PX4_DIR"
-HEADLESS=1 make px4_sitl gazebo-classic_iris_depth_camera > "$REPORTS_DIR/px4.log" 2>&1 &
+HEADLESS=1 make px4_sitl gazebo-classic_iris_depth_payload > "$REPORTS_DIR/px4.log" 2>&1 &
 PX4_PID=$!
-sleep 15
+sleep 60
 
 echo "[3/4] Launching ROS 2 offboard control (omega=0.25)..."
 cd "$WORKSPACE_DIR/ros2_ws"
@@ -37,12 +37,12 @@ cd "$WORKSPACE_DIR/ros2_ws"
 [ -f "$HOME/px4_msgs_ws/install/setup.bash" ] && source "$HOME/px4_msgs_ws/install/setup.bash"
 [ -f install/setup.bash ] && source install/setup.bash
 
-ros2 launch uav_control figure8_experiment.launch.py metrics_path:="$METRICS_FILE" omega:=0.25 > "$REPORTS_DIR/ros2.log" 2>&1 &
+ros2 launch uav_control geometric_figure8_experiment.launch.py metrics_path:="$METRICS_FILE" omega:=0.25 hover_thrust:=0.72 > "$REPORTS_DIR/ros2.log" 2>&1 &
 ROS_PID=$!
 
-# The script collects steady-state data post-25s. 50 seconds total gives a solid window.
-echo "Waiting 50 seconds for experiment to collect steady-state data..."
-sleep 50
+# The script collects steady-state data post-25s. 85 seconds allows takeoff + full trajectory.
+echo "Waiting 85 seconds for experiment to collect steady-state data..."
+sleep 85
 
 echo "[4/4] Cleaning up processes..."
 kill -INT $ROS_PID 2>/dev/null || true
@@ -63,35 +63,4 @@ if [ ! -f "$METRICS_FILE" ]; then
     exit 1
 fi
 
-python3 - <<EOF
-import pandas as pd
-import sys
-
-metrics_file = "$METRICS_FILE"
-try:
-    df = pd.read_csv(metrics_file)
-    if 't_s' not in df.columns or 'error_norm' not in df.columns:
-        print(f"\033[31m[FAIL]\033[0m Missing required columns in {metrics_file}")
-        sys.exit(1)
-
-    # Filter for post-25s steady state
-    steady_state = df[df['t_s'] >= 25.0]
-
-    if len(steady_state) == 0:
-        print("\033[31m[FAIL]\033[0m Not enough data collected past 25 seconds.")
-        sys.exit(1)
-
-    mean_error = steady_state['error_norm'].mean()
-    print(f"Post-25s Mean 3D Tracking Error: {mean_error:.3f} m")
-
-    if mean_error < 0.50:
-        print(f"\033[32m[PASS]\033[0m Error {mean_error:.3f} m is < 0.50 m threshold.")
-        sys.exit(0)
-    else:
-        print(f"\033[31m[FAIL]\033[0m Error {mean_error:.3f} m exceeds 0.50 m threshold.")
-        sys.exit(1)
-
-except Exception as e:
-    print(f"\033[31m[FAIL]\033[0m Error parsing CSV: {e}")
-    sys.exit(1)
-EOF
+python3 "$WORKSPACE_DIR/tools/evaluate_reference_metrics.py" --csv "$METRICS_FILE" --threshold 0.50 --steady-start 25.0
