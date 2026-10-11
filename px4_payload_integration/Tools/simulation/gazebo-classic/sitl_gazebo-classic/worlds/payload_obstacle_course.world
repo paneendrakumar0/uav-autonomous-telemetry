@@ -136,5 +136,13 @@
       </link>
     </model>
 
+    <!-- Camera viewpoint optimized for recording the full course -->
+    <gui fullscreen='0'>
+      <camera name='user_camera'>
+        <pose>-5.0 -6.0 6.5 0 0.45 0.85</pose>
+        <view_controller>orbit</view_controller>
+      </camera>
+    </gui>
+
   </world>
 </sdf>
