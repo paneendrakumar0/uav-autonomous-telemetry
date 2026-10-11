@@ -18,5 +18,14 @@ reports/single_validation_*/logs/
 .idea/
 *~
 
-# Large local simulator binaries should not be added here
+# Python virtual environment
+.venv/
+
+# Large local simulator binaries and repos
 QGroundControl*.AppImage
+px4_msgs/
+
+# Runtime logs
+*.log
+reports/**/*.log
+ros2_ws/reports/

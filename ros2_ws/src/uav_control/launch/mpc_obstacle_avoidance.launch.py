@@ -5,10 +5,20 @@ from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
+
 def generate_launch_description():
     uav_control_dir = get_package_share_directory('uav_control')
+    metrics_path = LaunchConfiguration('metrics_path')
 
     return LaunchDescription([
+        DeclareLaunchArgument(
+            'metrics_path',
+            default_value='reports/obstacle_traversal_metrics.csv',
+            description='CSV path for obstacle avoidance metrics'
+        ),
+
         # 1. Start the 3D Volumetric Mapping Node
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
@@ -21,18 +31,11 @@ def generate_launch_description():
             package='uav_control',
             executable='mpc_trajectory_planner',
             name='mpc_trajectory_planner',
-            output='screen'
-        ),
-
-        # 3. Start the Low-Level Offboard Controller (executes MPC setpoints)
-        Node(
-            package='uav_control',
-            executable='offboard_control',
-            name='offboard_control',
+            parameters=[{'metrics_path': metrics_path}],
             output='screen'
         ),
         
-        # 4. Broadcast Static Transforms for Depth Camera Vision
+        # 3. Broadcast Static Transforms for Depth Camera Vision
         Node(
             package='tf2_ros',
             executable='static_transform_publisher',
