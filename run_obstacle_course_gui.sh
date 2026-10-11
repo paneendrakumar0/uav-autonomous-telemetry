@@ -25,9 +25,15 @@ echo "=========================================================="
 echo " Starting Gazebo Classic 3D GUI Window on your desktop..."
 echo " (Loading payload_obstacle_course.world with 3D models)  "
 echo "=========================================================="
+# Sync world file to PX4 tree so local world edits take effect immediately
+cp -f "$WORKSPACE_DIR/px4_payload_integration/Tools/simulation/gazebo-classic/sitl_gazebo-classic/worlds/payload_obstacle_course.world" \
+      "$PX4_DIR/Tools/simulation/gazebo-classic/sitl_gazebo-classic/worlds/payload_obstacle_course.world" 2>/dev/null || true
+
 cd "$PX4_DIR"
 export PX4_SITL_WORLD=payload_obstacle_course
-# NOTICE: We deliberately omit HEADLESS=1 so the 3D window pops up on your screen!
+# Disable aggressive follow camera so the 3D window has stable, smooth rendering without jitter or ghosting
+export PX4_NO_FOLLOW_MODE=1
+
 make px4_sitl gazebo-classic_iris_depth_payload > "$REPORTS_DIR/px4.log" 2>&1 &
 PX4_PID=$!
 
@@ -66,10 +72,17 @@ cd "$WORKSPACE_DIR/ros2_ws"
 
 echo ""
 echo "=========================================================="
+echo " FLIGHT CORRIDOR & OBSTACLE MAP:                          "
+echo "  Start:     x = 0.0m (Asphalt Runway Pad)                "
+echo "  Direction: FORWARD along +X (towards the obstacles)     "
+echo "  Pillar 1:  x = 5.0m  -> Drone curves right to y = +2.0m "
+echo "  The Gate:  x = 10.0m -> Drone re-centers through gate   "
+echo "  The Wall:  x = 15.0m -> Drone stops smoothly at x=13.5m "
+echo "=========================================================="
 echo " THE DRONE IS NOW FLYING IN THE 3D GAZEBO WINDOW!        "
 echo " You can now record your screen or the Gazebo window.    "
-echo " Trajectory will automatically complete at the goal.     "
-echo " Press Ctrl+C anytime if you want to abort early.        "
+echo " (Tip: Press Print Screen or Ctrl+Alt+Shift+R to record)  "
+echo " Flight will automatically complete upon reaching goal.  "
 echo "=========================================================="
 echo ""
 
