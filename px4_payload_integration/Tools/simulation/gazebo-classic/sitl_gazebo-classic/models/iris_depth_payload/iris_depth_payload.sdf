@@ -564,11 +564,11 @@
       </control_channels>
     </plugin>
     <include>
-      <uri>model://depth_camera</uri>
+      <uri>model://ros2_depth_camera</uri>
       <pose>0.1 0 0 0 0 0</pose>
     </include>
     <joint name="depth_camera_joint" type="revolute">
-      <child>depth_camera::link</child>
+      <child>ros2_depth_camera::link</child>
       <parent>base_link</parent>
       <axis>
         <xyz>0 0 1</xyz>

@@ -4,6 +4,7 @@
 
 # Python virtual environment
 .venv
+.venv/
 
 # Experiment reports (large, not needed in container)
 reports/
