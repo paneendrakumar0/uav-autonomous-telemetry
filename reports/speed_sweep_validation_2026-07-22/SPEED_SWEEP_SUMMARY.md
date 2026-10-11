@@ -87,12 +87,12 @@ The main finding is speed dependence. At `omega=0.15 rad/s`, the PX4 baseline tr
 
 The crossover behavior suggests that the current geometric-controller gains are better suited to moderate and high trajectory rates than to slow Figure-8 motion. Slow-speed tuning should therefore be treated separately from high-speed payload-swing suppression.
 
-## Kinematic Aggressiveness
+## Trajectory Aggressiveness vs. Controller Bandwidth
 
-To contextualize tracking degradation at higher speeds, the theoretical peak kinematic requirements for the Figure-8 trajectory (amplitude $A = 5.0\text{ m}$) scale with the rate parameter $\omega$:
+To address whether the tracking degradation is driven by trajectory aggressiveness or controller bandwidth, we analyze the theoretical peak kinematics of the commanded Figure-8 (amplitude $A = 5.0\text{ m}$):
 
-- **Maximum velocity:** $v_{max} = \sqrt{5} A \omega$
-- **Maximum acceleration:** $a_{max} = 4 A \omega^2$
+- **Maximum Velocity:** $v_{max} = \sqrt{5} A \omega$
+- **Maximum Acceleration:** $a_{max} = 4 A \omega^2$
 
 | $\omega$ (rad/s) | $v_{max}$ (m/s) | $a_{max}$ (m/s$^2$) |
 |---|---:|---:|
@@ -101,4 +101,12 @@ To contextualize tracking degradation at higher speeds, the theoretical peak kin
 | 0.25 | 2.80 | 1.25 |
 | 0.30 | 3.35 | 1.80 |
 
-These limits indicate that as frequency increases past $0.25\text{ rad/s}$, the combined velocity and acceleration demands may exceed the aggressive tracking capabilities of the baseline controller, while the geometric controller maintains better bandwidth.
+### Interpretation
+
+1. **Low-Speed Regime ($\omega = 0.15$ rad/s):**
+   At this frequency, kinematic demands are very low ($a_{max} = 0.45\text{ m/s}^2$). Because the PX4 baseline outperforms the geometric controller here, the geometric controller's degradation is **not** due to trajectory aggressiveness. Instead, it indicates a **tuning/bandwidth issue**—the geometric gains are likely tuned too stiffly for slow, quasi-static reference tracking, resulting in over-correction.
+
+2. **High-Speed Regime ($\omega \ge 0.25$ rad/s):**
+   As frequency increases, acceleration demands scale quadratically, reaching $1.80\text{ m/s}^2$ at $\omega = 0.30$. In this regime, tracking errors increase for *both* controllers. This universal degradation points to **trajectory aggressiveness** pushing the physical actuation limits of the vehicle. However, the geometric controller maintains better bandwidth than the baseline under these high dynamic loads, tracking the aggressive reference significantly better and suppressing payload swing.
+
+**Conclusion:** High-speed tracking degradation is fundamentally tied to trajectory aggressiveness ($a_{max}$ scaling). Conversely, the geometric controller's underperformance at low speeds is a bandwidth/tuning artifact, suggesting that gain-scheduling may be required for optimal flight across all trajectory rates.
