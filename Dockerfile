@@ -18,10 +18,16 @@ SHELL ["/bin/bash", "-c"]
 # ------------------------------------------------------------------------------
 # 1. System Dependencies & Gazebo Classic 11
 # ------------------------------------------------------------------------------
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends wget gnupg lsb-release && \
+    wget https://packages.osrfoundation.org/gazebo.gpg -O /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg && \
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable jammy main" | tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null && \
+    apt-get update && apt-get install -y --no-install-recommends \
     gazebo \
-    libgazebo11-dev \
+    libgazebo-dev \
     ros-humble-gazebo-ros-pkgs \
+    ros-humble-octomap \
+    ros-humble-octomap-msgs \
+    ros-humble-octomap-server \
     git \
     wget \
     curl \
@@ -58,6 +64,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     dmidecode \
     bc \
     && rm -rf /var/lib/apt/lists/*
+RUN pip3 install PyQt6 pyqtgraph
 
 RUN pip3 install --no-cache-dir kconfiglib pyros-genmsg pyulog
 
@@ -75,7 +82,7 @@ RUN git clone --recursive --branch ${PX4_TAG} https://github.com/PX4/PX4-Autopil
 # ------------------------------------------------------------------------------
 # 3. Micro XRCE-DDS Agent (Pinned to v2.4.2)
 # ------------------------------------------------------------------------------
-ARG DDS_AGENT_TAG=v2.4.2
+ARG DDS_AGENT_TAG=master
 RUN git clone --depth 1 --branch ${DDS_AGENT_TAG} https://github.com/eProsima/Micro-XRCE-DDS-Agent.git && \
     cd Micro-XRCE-DDS-Agent && \
     mkdir build && cd build && \
