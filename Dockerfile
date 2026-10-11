@@ -124,7 +124,7 @@ RUN PX4=/root/PX4-Autopilot && \
        "${PX4}/Tools/simulation/gazebo-classic/sitl_gazebo-classic/models/ros2_depth_camera/" && \
     cp /root/px4_payload_integration/Tools/simulation/gazebo-classic/sitl_gazebo-classic/worlds/*.world \
        "${PX4}/Tools/simulation/gazebo-classic/sitl_gazebo-classic/worlds/" 2>/dev/null || true && \
-    cd "${PX4}" && make px4_sitl_default -j$(nproc)
+    cd "${PX4}" && DONT_RUN=1 make px4_sitl gazebo-classic_iris_depth_payload -j$(nproc)
 
 # ------------------------------------------------------------------------------
 # 6. Build Project ROS 2 Workspace

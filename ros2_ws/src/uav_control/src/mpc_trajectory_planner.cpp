@@ -141,6 +141,12 @@ private:
     void control_loop() {
         publish_offboard_control_mode();
 
+        if (!pos_received_) {
+            RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 2000,
+                "Waiting for vehicle telemetry from PX4 (EKF2 initialization)...");
+            return;
+        }
+
         if (init_counter_ < 20) {
             init_counter_++;
             // Publish initial takeoff setpoint
@@ -212,6 +218,11 @@ private:
             if (stage_ != 5) {
                 stage_ = 5;
                 RCLCPP_INFO(this->get_logger(), "[MPC STAGE 5] Goal Reached! Obstacle course completed with 0 collisions.");
+            }
+            if (t > 58.0) {
+                RCLCPP_INFO(this->get_logger(), "Flight complete. Obstacle course successfully traversed. Shutting down.");
+                rclcpp::shutdown();
+                return;
             }
         }
 

@@ -31,19 +31,17 @@ export PX4_SITL_WORLD=payload_obstacle_course
 make px4_sitl gazebo-classic_iris_depth_payload > "$REPORTS_DIR/px4.log" 2>&1 &
 PX4_PID=$!
 
-echo "Waiting 20 seconds for the Gazebo GUI window to load..."
-sleep 20
+echo "Waiting for Gazebo 3D simulation window to appear on screen..."
+for i in $(seq 1 60); do
+    if pgrep -f gzclient >/dev/null && pgrep -f gzserver >/dev/null; then
+        echo "Gazebo GUI window is open and connected to simulation!"
+        break
+    fi
+    sleep 1
+done
 
-echo "=========================================================="
-echo " Launching Payload-Aware Convex MPC Obstacle Flight...   "
-echo "=========================================================="
-cd "$WORKSPACE_DIR/ros2_ws"
-[ -f /opt/ros/humble/setup.bash ] && source /opt/ros/humble/setup.bash
-[ -f "$HOME/px4_msgs_ws/install/setup.bash" ] && source "$HOME/px4_msgs_ws/install/setup.bash"
-[ -f install/setup.bash ] && source install/setup.bash
-
-ros2 launch uav_control mpc_obstacle_avoidance.launch.py metrics_path:="$METRICS_FILE" &
-ROS_PID=$!
+# Allow Gazebo scene and models to settle
+sleep 3
 
 cleanup() {
     echo ""
@@ -54,16 +52,36 @@ cleanup() {
     pkill -f gzclient 2>/dev/null || true
     pkill -f gzserver 2>/dev/null || true
     pkill -f px4 2>/dev/null || true
-    echo "Shutdown complete."
+    echo "Simulation shutdown complete."
 }
 trap cleanup EXIT INT TERM
+
+echo "=========================================================="
+echo " Launching Payload-Aware Convex MPC Obstacle Flight...   "
+echo "=========================================================="
+cd "$WORKSPACE_DIR/ros2_ws"
+[ -f /opt/ros/humble/setup.bash ] && source /opt/ros/humble/setup.bash
+[ -f "$HOME/px4_msgs_ws/install/setup.bash" ] && source "$HOME/px4_msgs_ws/install/setup.bash"
+[ -f install/setup.bash ] && source install/setup.bash
 
 echo ""
 echo "=========================================================="
 echo " THE DRONE IS NOW FLYING IN THE 3D GAZEBO WINDOW!        "
 echo " You can now record your screen or the Gazebo window.    "
-echo " Press Ctrl+C in this terminal when you want to stop.    "
+echo " Trajectory will automatically complete at the goal.     "
+echo " Press Ctrl+C anytime if you want to abort early.        "
 echo "=========================================================="
 echo ""
 
+ros2 launch uav_control mpc_obstacle_avoidance.launch.py metrics_path:="$METRICS_FILE" &
+ROS_PID=$!
+
 wait $ROS_PID 2>/dev/null || true
+
+echo "=========================================================="
+echo " Analyzing Obstacle Avoidance & Swing Metrics "
+echo "=========================================================="
+
+if [ -f "$METRICS_FILE" ]; then
+    python3 "$WORKSPACE_DIR/tools/evaluate_obstacle_metrics.py" --csv "$METRICS_FILE"
+fi
